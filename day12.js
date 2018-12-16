@@ -4,6 +4,9 @@ const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, 
 const test = process.env.NODE_ENV === 'test' ? it : () => {}
 const xtest = process.env.NODE_ENV === 'test' ? xit : () => {}
 
+let generations = 20
+// generations = 50000000000
+
 const listToString = ({ firstPot }) => {
   let result = ''
   let current = firstPot
@@ -158,8 +161,11 @@ test('compute score', () => {
 
 const main = input => {
   const config = readConfig(input)
-  const finalState = reduce(nextState(config.liveRules), { field: config.initialState, offset: 0 }, range(1, 21))
-  return computeScore(finalState)
+  let state = { field: config.initialState, offset: 0 }
+  for (let i = 0; i < generations; i++) {
+    state = nextState(config.liveRules)(state)
+  }
+  return computeScore(state)
 }
 
 const refInput = `initial state: #..#.#..##......###...###
