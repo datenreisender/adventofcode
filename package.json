@@ -1,0 +1,23 @@
+{
+  "name": "adventofcode",
+  "version": "1.0.0",
+  "description": "",
+  "main": "a.js",
+  "dependencies": {
+    "ramda": "^0.26.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.9.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "jest": "^23.6.0"
+  },
+  "scripts": {
+    "test": "jest --watch day12.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
