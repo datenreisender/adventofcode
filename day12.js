@@ -81,7 +81,7 @@ const nextState = liveRules =>
     trimDead
   )
 
-xtest('acceptance of nextState', () => {
+test('acceptance of nextState', () => {
   const liveRules = [ '...##', '..#..', '.#...', '.#.#.', '.#.##', '.##..', '.####', '#.#.#', '#.###', '##.#.', '##.##', '###..', '###.#', '####.' ]
   const nextStateAfter = nextState(liveRules)
 
