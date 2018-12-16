@@ -105,7 +105,7 @@ test('compute score', () => {
 
 const main = input => {
   const config = readConfig(input)
-  const finalState = reduce(nextState(config.liveRules), { field: config.initialState, offset: 0 }, range(1, 20))
+  const finalState = reduce(nextState(config.liveRules), { field: config.initialState, offset: 0 }, range(1, 21))
   return computeScore(finalState)
 }
 
@@ -127,7 +127,7 @@ const refInput = `initial state: #..#.#..##......###...###
 ####. => #
 `
 
-xtest('acceptance', () => {
+test('acceptance', () => {
   expect(main(refInput)).toBe(325)
 })
 
