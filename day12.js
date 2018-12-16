@@ -4,6 +4,46 @@ const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, 
 const test = process.env.NODE_ENV === 'test' ? it : () => {}
 const xtest = process.env.NODE_ENV === 'test' ? xit : () => {}
 
+const listToString = ({ firstPot }) => {
+  let result = ''
+  let current = firstPot
+  while (current != null) {
+    result += current.state
+    current = current.next
+  }
+  return result
+}
+
+const appendPot = ({ firstPot, lastPot }, state = '.') => {
+  const newPot = {
+    number: lastPot.number + 1,
+    state,
+    prev: lastPot,
+    next: undefined
+  }
+  lastPot.next = newPot
+
+  return { firstPot, lastPot: newPot }
+}
+
+const createLinkedList = initialState =>
+  initialState.split('').reduce((state, currentPotState) => {
+    if (state == null) {
+      const firstPot = {
+        number: 0,
+        state: currentPotState,
+        prev: undefined,
+        next: undefined
+      }
+      return {
+        firstPot,
+        lastPot: firstPot
+      }
+    }
+
+    return appendPot(state, currentPotState)
+  }, null)
+
 const readConfig = input => {
   const lineIsNotEmpty = line => line.length !== 0
   const lines = input.split('\n').filter(lineIsNotEmpty)
@@ -14,8 +54,10 @@ const readConfig = input => {
       .filter(contains(result))
       .map(dropLast(result.length))
 
+  const initialState = lines[0].substring('initial state: '.length)
   return {
-    initialState: lines[0].substring('initial state: '.length),
+    initialState, // DEP
+    ...createLinkedList(initialState),
     liveRules: rulesFor(' => #'),
     dieRules: rulesFor(' => .')
   }
@@ -28,8 +70,19 @@ test('reading config file', () => {
 ###.# => .`)
 
   expect(config.initialState).toEqual('###..###')
+  expect(listToString(config)).toEqual('###..###')
   expect(config.liveRules).toEqual(['..#.#'])
   expect(config.dieRules).toEqual(['###.#'])
+
+  expect(config.firstPot.state).toEqual('#')
+  expect(config.firstPot.number).toEqual(0)
+  expect(config.firstPot.next.state).toEqual('#')
+  expect(config.firstPot.next.number).toEqual(1)
+
+  expect(config.lastPot.state).toEqual('#')
+  expect(config.lastPot.number).toEqual(7)
+  expect(config.lastPot.prev.state).toEqual('#')
+  expect(config.lastPot.prev.number).toEqual(6)
 })
 
 const deadCellPadding = '....'
