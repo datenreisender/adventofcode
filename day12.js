@@ -60,7 +60,19 @@ test('iterate over middle', () => {
     .toEqual({ field: '#...#', offset: -2 })
 })
 
-const trimDead = identity
+const trimDead = ({ field, offset }) => {
+  const deadAtStart = /^\.*/.exec(field)[0].length
+  const deadAtEnd = /\.*$/.exec(field)[0].length
+  return {
+    field: field.slice(deadAtStart, field.length - deadAtEnd),
+    offset: offset + deadAtStart
+  }
+}
+
+test('trimDead', () => {
+  expect(trimDead({ field: '..#..#...', offset: -4 })).toEqual({ field: '#..#', offset: -2 })
+  expect(trimDead({ field: '#..#', offset: -2 })).toEqual({ field: '#..#', offset: -2 })
+})
 
 const nextState = liveRules =>
   pipe(
