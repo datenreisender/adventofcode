@@ -32,7 +32,7 @@ test('reading config file', () => {
   expect(config.dieRules).toEqual(['###.#'])
 })
 
-const deadCellPadding = '.....'
+const deadCellPadding = '....'
 const prependString = concat
 const appendString = flip(concat)
 const surroundWithDead = evolve({
@@ -41,16 +41,31 @@ const surroundWithDead = evolve({
 })
 
 test('surround with dead', () => {
-  expect(surroundWithDead({ field: '#', offset: 0 })).toEqual({ field: '.....#.....', offset: -5 })
+  expect(surroundWithDead({ field: '#', offset: 0 })).toEqual({ field: '....#....', offset: -4 })
 })
 
-const iterateOverMiddle = identity
+const iterateOverMiddle = liveRules => evolve({
+  field: field =>
+    range(0, field.length - 4)
+      .map(i => field.slice(i, i + 5))
+      .map(slice => liveRules.includes(slice) ? '#' : '.')
+      .join(''),
+  offset: add(2)
+})
+
+test('iterate over middle', () => {
+  const liveRules = [ '....#', '#....' ]
+
+  expect(iterateOverMiddle(liveRules)({ field: '....#....', offset: -4 }))
+    .toEqual({ field: '#...#', offset: -2 })
+})
+
 const trimDead = identity
 
 const nextState = liveRules =>
   pipe(
     surroundWithDead,
-    iterateOverMiddle,
+    iterateOverMiddle(liveRules),
     trimDead
   )
 
