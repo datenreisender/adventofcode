@@ -1,5 +1,5 @@
 /* eslint-env jest */
-const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast } = require('ramda') // eslint-disable-line no-unused-vars
+const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip } = require('ramda') // eslint-disable-line no-unused-vars
 
 const test = process.env.NODE_ENV === 'test' ? it : () => {}
 const xtest = process.env.NODE_ENV === 'test' ? xit : () => {}
@@ -32,9 +32,27 @@ test('reading config file', () => {
   expect(config.dieRules).toEqual(['###.#'])
 })
 
-const nextState = liveRules => (state) => {
-  return state
-}
+const deadCellPadding = '.....'
+const prependString = concat
+const appendString = flip(concat)
+const surroundWithDead = evolve({
+  field: pipe(appendString(deadCellPadding), prependString(deadCellPadding)),
+  offset: subtract(__, deadCellPadding.length)
+})
+
+test('surround with dead', () => {
+  expect(surroundWithDead({ field: '#', offset: 0 })).toEqual({ field: '.....#.....', offset: -5 })
+})
+
+const iterateOverMiddle = identity
+const trimDead = identity
+
+const nextState = liveRules =>
+  pipe(
+    surroundWithDead,
+    iterateOverMiddle,
+    trimDead
+  )
 
 xtest('acceptance of nextState', () => {
   const liveRules = [ '...##', '..#..', '.#...', '.#.#.', '.#.##', '.##..', '.####', '#.#.#', '#.###', '##.#.', '##.##', '###..', '###.#', '####.' ]
