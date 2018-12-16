@@ -93,7 +93,15 @@ test('acceptance of nextState', () => {
     .toEqual({ field: '#.#..#...#.#...#..#..##..##', offset: 0 })
 })
 
-const computeScore = TODO => TODO
+const computeScore = ({ field, offset }) =>
+  sum(field.split('').map((cell, index) =>
+    cell === '.' ? 0 : index + offset
+  ))
+
+test('compute score', () => {
+  expect(computeScore({ field: '#..#', offset: -1 }))
+    .toEqual(-1 + 2)
+})
 
 const main = input => {
   const config = readConfig(input)
