@@ -142,7 +142,7 @@ test('surround with dead', () => {
   expect(listToString(surroundWithDead(createLinkedList('#.....')))).toEqual('....#.....')
 })
 
-const iterateOverMiddle = liveRules => evolve({
+const iterateOverMiddle_DEP = liveRules => evolve({
   field: field =>
     range(0, field.length - 4)
       .map(i => field.slice(i, i + 5))
@@ -151,11 +151,40 @@ const iterateOverMiddle = liveRules => evolve({
   offset: add(2)
 })
 
+const patternAround = current =>
+  current.prev.prev.state +
+  current.prev.state +
+  current.state +
+  current.next.state +
+  current.next.next.state
+
+const iterateOverMiddle = liveRules => ({ firstPot, lastPot }) => {
+  let current = firstPot.next.next
+  const end = lastPot.prev
+  do {
+    current.nextState = liveRules.includes(patternAround(current)) ? '#' : '.'
+    current = current.next
+  } while (current !== end)
+
+  current = firstPot
+  do {
+    current.state = current.nextState || current.state
+    current = current.next
+  } while (current != null)
+
+  return ({ firstPot, lastPot })
+}
+
 test('iterate over middle', () => {
   const liveRules = [ '....#', '#....' ]
 
-  expect(iterateOverMiddle(liveRules)({ field: '....#....', offset: -4 }))
+  expect(iterateOverMiddle_DEP(liveRules)({ field: '....#....', offset: -4 }))
     .toEqual({ field: '#...#', offset: -2 })
+
+  const input = '....#....'
+  const result = iterateOverMiddle(liveRules)(createLinkedList(input))
+  expect(input.length).toEqual(listToString(result).length)
+  expect(listToString(result)).toEqual('..#...#..')
 })
 
 const trimDead = ({ field, offset }) => {
@@ -175,7 +204,7 @@ test('trimDead', () => {
 const nextState = liveRules =>
   pipe(
     surroundWithDead_DEP,
-    iterateOverMiddle(liveRules),
+    iterateOverMiddle_DEP(liveRules),
     trimDead
   )
 
