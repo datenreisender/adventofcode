@@ -266,11 +266,11 @@ test('compute score', () => {
 
 const main = input => {
   const config = readConfig(input)
-  let state = { field: config.initialState, offset: 0 }
+  let state = { firstPot: config.firstPot, lastPot: config.lastPot }
   for (let i = 0; i < generations; i++) {
-    state = nextState_DEP(config.liveRules)(state)
+    state = nextState(config.liveRules)(state)
   }
-  return computeScore_DEP(state)
+  return computeScore(state)
 }
 
 const refInput = `initial state: #..#.#..##......###...###
