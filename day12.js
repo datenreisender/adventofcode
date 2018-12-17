@@ -29,6 +29,18 @@ const appendPot = ({ firstPot, lastPot }, state = '.') => {
   return { firstPot, lastPot: newPot }
 }
 
+const prependPot = ({ firstPot, lastPot }, state = '.') => {
+  const newPot = {
+    number: firstPot.number - 1,
+    state,
+    prev: undefined,
+    next: firstPot
+  }
+  firstPot.prev = newPot
+
+  return { firstPot: newPot, lastPot }
+}
+
 const createLinkedList = initialState =>
   initialState.split('').reduce((state, currentPotState) => {
     if (state == null) {
@@ -91,13 +103,43 @@ test('reading config file', () => {
 const deadCellPadding = '....'
 const prependString = concat
 const appendString = flip(concat)
-const surroundWithDead = evolve({
+const surroundWithDead_DEP = evolve({
   field: pipe(appendString(deadCellPadding), prependString(deadCellPadding)),
   offset: subtract(__, deadCellPadding.length)
 })
 
+const neededEmptyPotsAtBoundaries = 4
+const missingEmptyPots = nextElement => boundaryPot => {
+  let emptyPotsAtBoundary = 0
+  let current = boundaryPot
+  while (
+    current != null &&
+    current.state === '.' &&
+    emptyPotsAtBoundary < neededEmptyPotsAtBoundaries
+  ) {
+    emptyPotsAtBoundary++
+    current = nextElement(current)
+  }
+
+  return neededEmptyPotsAtBoundaries - emptyPotsAtBoundary
+}
+
+const missingEmptyPotsAtStart = missingEmptyPots(prop('next'))
+const missingEmptyPotsAtEnd = missingEmptyPots(prop('prev'))
+
+const surroundWithDead = state => pipe(
+  ...times(() => prependPot, missingEmptyPotsAtStart(state.firstPot)),
+  ...times(() => appendPot, missingEmptyPotsAtEnd(state.lastPot))
+)(state)
+
 test('surround with dead', () => {
-  expect(surroundWithDead({ field: '#', offset: 0 })).toEqual({ field: '....#....', offset: -4 })
+  expect(surroundWithDead_DEP({ field: '#', offset: 0 })).toEqual({ field: '....#....', offset: -4 })
+  const result = surroundWithDead(createLinkedList('.#..'))
+  expect(listToString(result)).toEqual('....#....')
+  expect(result.firstPot.number).toEqual(-3)
+  expect(result.lastPot.number).toEqual(5)
+
+  expect(listToString(surroundWithDead(createLinkedList('#.....')))).toEqual('....#.....')
 })
 
 const iterateOverMiddle = liveRules => evolve({
@@ -132,7 +174,7 @@ test('trimDead', () => {
 
 const nextState = liveRules =>
   pipe(
-    surroundWithDead,
+    surroundWithDead_DEP,
     iterateOverMiddle(liveRules),
     trimDead
   )
