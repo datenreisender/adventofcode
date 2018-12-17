@@ -238,14 +238,28 @@ test('acceptance of nextState', () => {
   expect(listToString(nextStateAfter(result))).toEqual('.....#.#..#...#.#...#..#..##..##...')
 })
 
-const computeScore = ({ field, offset }) =>
+const computeScore_DEP = ({ field, offset }) =>
   sum(field.split('').map((cell, index) =>
     cell === '.' ? 0 : index + offset
   ))
 
+const computeScore = ({ firstPot }) => {
+  let sum = 0
+  let current = firstPot
+  while (current != null) {
+    sum += current.state === '.' ? 0 : current.number
+    current = current.next
+  }
+
+  return sum
+}
+
 test('compute score', () => {
-  expect(computeScore({ field: '#..#', offset: -1 }))
+  expect(computeScore_DEP({ field: '#..#', offset: -1 }))
     .toEqual(-1 + 2)
+
+  expect(computeScore(createLinkedList('.#.#')))
+    .toEqual(1 + 3)
 })
 
 const main = input => {
@@ -254,7 +268,7 @@ const main = input => {
   for (let i = 0; i < generations; i++) {
     state = nextState_DEP(config.liveRules)(state)
   }
-  return computeScore(state)
+  return computeScore_DEP(state)
 }
 
 const refInput = `initial state: #..#.#..##......###...###
