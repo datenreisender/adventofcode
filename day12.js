@@ -131,6 +131,7 @@ const missingEmptyPotsAtStart = missingEmptyPots(prop('next'))
 const missingEmptyPotsAtEnd = missingEmptyPots(prop('prev'))
 
 const surroundWithDead = state => pipe(
+  identity,
   ...times(() => prependPot, missingEmptyPotsAtStart(state.firstPot)),
   ...times(() => appendPot, missingEmptyPotsAtEnd(state.lastPot))
 )(state)
@@ -143,6 +144,7 @@ test('surround with dead', () => {
   expect(result.lastPot.number).toEqual(5)
 
   expect(listToString(surroundWithDead(createLinkedList('#.....')))).toEqual('....#.....')
+  expect(listToString(surroundWithDead(createLinkedList('....#.....')))).toEqual('....#.....')
 })
 
 const iterateOverMiddle_DEP = liveRules => evolve({
