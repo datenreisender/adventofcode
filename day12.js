@@ -10,7 +10,10 @@ let generations = 20
 const listToString = ({ firstPot }) => {
   let result = ''
   let current = firstPot
+  let number = current.number
   while (current != null) {
+    if (number !== current.number) throw (new Error(`Property violated: After ${current.prev.number} the next number is ${current.number}`))
+    number++
     result += current.state
     current = current.next
   }
