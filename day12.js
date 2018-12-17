@@ -74,7 +74,6 @@ const readConfig = input => {
 
   const initialState = lines[0].substring('initial state: '.length)
   return {
-    initialState, // DEP
     ...createLinkedList(initialState),
     liveRules: rulesFor(' => #'),
     dieRules: rulesFor(' => .')
@@ -87,7 +86,6 @@ test('reading config file', () => {
 ..#.# => #
 ###.# => .`)
 
-  expect(config.initialState).toEqual('###..###')
   expect(listToString(config)).toEqual('###..###')
   expect(config.liveRules).toEqual(['..#.#'])
   expect(config.dieRules).toEqual(['###.#'])
@@ -101,14 +99,6 @@ test('reading config file', () => {
   expect(config.lastPot.number).toEqual(7)
   expect(config.lastPot.prev.state).toEqual('#')
   expect(config.lastPot.prev.number).toEqual(6)
-})
-
-const deadCellPadding = '....'
-const prependString = concat
-const appendString = flip(concat)
-const surroundWithDead_DEP = evolve({
-  field: pipe(appendString(deadCellPadding), prependString(deadCellPadding)),
-  offset: subtract(__, deadCellPadding.length)
 })
 
 const neededEmptyPotsAtBoundaries = 4
@@ -137,7 +127,6 @@ const surroundWithDead = state => pipe(
 )(state)
 
 test('surround with dead', () => {
-  expect(surroundWithDead_DEP({ field: '#', offset: 0 })).toEqual({ field: '....#....', offset: -4 })
   const result = surroundWithDead(createLinkedList('.#..'))
   expect(listToString(result)).toEqual('....#....')
   expect(result.firstPot.number).toEqual(-3)
@@ -145,15 +134,6 @@ test('surround with dead', () => {
 
   expect(listToString(surroundWithDead(createLinkedList('#.....')))).toEqual('....#.....')
   expect(listToString(surroundWithDead(createLinkedList('....#.....')))).toEqual('....#.....')
-})
-
-const iterateOverMiddle_DEP = liveRules => evolve({
-  field: field =>
-    range(0, field.length - 4)
-      .map(i => field.slice(i, i + 5))
-      .map(slice => liveRules.includes(slice) ? '#' : '.')
-      .join(''),
-  offset: add(2)
 })
 
 const patternAround = current =>
@@ -182,10 +162,6 @@ const iterateOverMiddle = liveRules => ({ firstPot, lastPot }) => {
 
 test('iterate over middle', () => {
   const liveRules = [ '....#', '#....' ]
-
-  expect(iterateOverMiddle_DEP(liveRules)({ field: '....#....', offset: -4 }))
-    .toEqual({ field: '#...#', offset: -2 })
-
   const input = '....#....'
   const result = iterateOverMiddle(liveRules)(createLinkedList(input))
   expect(input.length).toEqual(listToString(result).length)
@@ -206,13 +182,6 @@ test('trimDead', () => {
   expect(trimDead({ field: '#..#', offset: -2 })).toEqual({ field: '#..#', offset: -2 })
 })
 
-const nextState_DEP = liveRules =>
-  pipe(
-    surroundWithDead_DEP,
-    iterateOverMiddle_DEP(liveRules),
-    trimDead
-  )
-
 const nextState = liveRules =>
   pipe(
     surroundWithDead,
@@ -221,14 +190,6 @@ const nextState = liveRules =>
 
 test('acceptance of nextState', () => {
   const liveRules = [ '...##', '..#..', '.#...', '.#.#.', '.#.##', '.##..', '.####', '#.#.#', '#.###', '##.#.', '##.##', '###..', '###.#', '####.' ]
-  const nextStateAfter_DEP = nextState_DEP(liveRules)
-
-  expect(nextStateAfter_DEP({ field: '#..#.#..##......###...###', offset: 0 }))
-    .toEqual({ field: '#...#....#.....#..#..#..#', offset: 0 })
-  expect(nextStateAfter_DEP({ field: '##..##...##....#..#..#..##', offset: 0 }))
-    .toEqual({ field: '#.#...#..#.#....#..#..#...#', offset: -1 })
-  expect(nextStateAfter_DEP({ field: '#.#...#..#.#....#..#..#...#', offset: -1 }))
-    .toEqual({ field: '#.#..#...#.#...#..#..##..##', offset: 0 })
 
   const nextStateAfter = nextState(liveRules)
   let result = nextStateAfter(createLinkedList('#..#.#..##......###...###'))
@@ -239,11 +200,6 @@ test('acceptance of nextState', () => {
 
   expect(listToString(nextStateAfter(result))).toEqual('.....#.#..#...#.#...#..#..##..##...')
 })
-
-const computeScore_DEP = ({ field, offset }) =>
-  sum(field.split('').map((cell, index) =>
-    cell === '.' ? 0 : index + offset
-  ))
 
 const computeScore = ({ firstPot }) => {
   let sum = 0
@@ -257,9 +213,6 @@ const computeScore = ({ firstPot }) => {
 }
 
 test('compute score', () => {
-  expect(computeScore_DEP({ field: '#..#', offset: -1 }))
-    .toEqual(-1 + 2)
-
   expect(computeScore(createLinkedList('.#.#')))
     .toEqual(1 + 3)
 })
