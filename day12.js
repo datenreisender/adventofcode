@@ -201,23 +201,38 @@ test('trimDead', () => {
   expect(trimDead({ field: '#..#', offset: -2 })).toEqual({ field: '#..#', offset: -2 })
 })
 
-const nextState = liveRules =>
+const nextState_DEP = liveRules =>
   pipe(
     surroundWithDead_DEP,
     iterateOverMiddle_DEP(liveRules),
     trimDead
   )
 
+const nextState = liveRules =>
+  pipe(
+    surroundWithDead,
+    iterateOverMiddle(liveRules)
+  )
+
 test('acceptance of nextState', () => {
   const liveRules = [ '...##', '..#..', '.#...', '.#.#.', '.#.##', '.##..', '.####', '#.#.#', '#.###', '##.#.', '##.##', '###..', '###.#', '####.' ]
-  const nextStateAfter = nextState(liveRules)
+  const nextStateAfter_DEP = nextState_DEP(liveRules)
 
-  expect(nextStateAfter({ field: '#..#.#..##......###...###', offset: 0 }))
+  expect(nextStateAfter_DEP({ field: '#..#.#..##......###...###', offset: 0 }))
     .toEqual({ field: '#...#....#.....#..#..#..#', offset: 0 })
-  expect(nextStateAfter({ field: '##..##...##....#..#..#..##', offset: 0 }))
+  expect(nextStateAfter_DEP({ field: '##..##...##....#..#..#..##', offset: 0 }))
     .toEqual({ field: '#.#...#..#.#....#..#..#...#', offset: -1 })
-  expect(nextStateAfter({ field: '#.#...#..#.#....#..#..#...#', offset: -1 }))
+  expect(nextStateAfter_DEP({ field: '#.#...#..#.#....#..#..#...#', offset: -1 }))
     .toEqual({ field: '#.#..#...#.#...#..#..##..##', offset: 0 })
+
+  const nextStateAfter = nextState(liveRules)
+  let result = nextStateAfter(createLinkedList('#..#.#..##......###...###'))
+  expect(listToString(result)).toEqual('....#...#....#.....#..#..#..#....')
+
+  result = nextStateAfter(createLinkedList('##..##...##....#..#..#..##'))
+  expect(listToString(result)).toEqual('...#.#...#..#.#....#..#..#...#....')
+
+  expect(listToString(nextStateAfter(result))).toEqual('.....#.#..#...#.#...#..#..##..##...')
 })
 
 const computeScore = ({ field, offset }) =>
@@ -234,7 +249,7 @@ const main = input => {
   const config = readConfig(input)
   let state = { field: config.initialState, offset: 0 }
   for (let i = 0; i < generations; i++) {
-    state = nextState(config.liveRules)(state)
+    state = nextState_DEP(config.liveRules)(state)
   }
   return computeScore(state)
 }
