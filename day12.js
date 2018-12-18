@@ -44,8 +44,8 @@ const prependPot = ({ firstPot, lastPot }, state = '.') => {
   return { firstPot: newPot, lastPot }
 }
 
-const createLinkedList = initialState =>
-  initialState.split('').reduce((state, currentPotState) => {
+const createLinkedList = stateSpec =>
+  stateSpec.split('').reduce((state, currentPotState) => {
     if (state == null) {
       const firstPot = {
         number: 0,
@@ -62,20 +62,30 @@ const createLinkedList = initialState =>
     return appendPot(state, currentPotState)
   }, null)
 
+const ruleNode = child => ({
+  state: '.',
+  '.': child,
+  '#': clone(child)
+})
+const rulesFor = ruleSpecs => {
+  const rules = range(0, 6).reduce(ruleNode, undefined)
+  ruleSpecs.forEach(ruleSpec => {
+    const matches = /^(.)(.)(.)(.)(.) => (.)$/.exec(ruleSpec)
+    rules[matches[1]][matches[2]][matches[3]][matches[4]][matches[5]].state = matches[6]
+  })
+
+  return rules
+}
+
 const readConfig = input => {
   const lineIsNotEmpty = line => line.length !== 0
   const lines = input.split('\n').filter(lineIsNotEmpty)
 
-  const rulesFor = result =>
-    lines
-      .slice(1)
-      .filter(contains(result))
-      .map(dropLast(result.length))
+  const stateSpec = lines[0].substring('initial state: '.length)
 
-  const initialState = lines[0].substring('initial state: '.length)
   return {
-    ...createLinkedList(initialState),
-    liveRules: rulesFor(' => #')
+    ...createLinkedList(stateSpec),
+    rules: rulesFor(lines.slice(1))
   }
 }
 
@@ -86,7 +96,6 @@ test('reading config file', () => {
 ###.# => .`)
 
   expect(listToString(config)).toEqual('###..###')
-  expect(config.liveRules).toEqual(['..#.#'])
 
   expect(config.firstPot.state).toEqual('#')
   expect(config.firstPot.number).toEqual(0)
@@ -97,6 +106,9 @@ test('reading config file', () => {
   expect(config.lastPot.number).toEqual(7)
   expect(config.lastPot.prev.state).toEqual('#')
   expect(config.lastPot.prev.number).toEqual(6)
+
+  expect(config.rules['.']['.']['#']['.']['#'].state).toBe('#')
+  expect(config.rules['#']['#']['#']['.']['#'].state).toBe('.')
 })
 
 const neededEmptyPotsAtBoundaries = 4
@@ -134,34 +146,33 @@ test('surround with dead', () => {
   expect(listToString(surroundWithDead(createLinkedList('....#.....')))).toEqual('....#.....')
 })
 
-const patternAround = current =>
-  current.prev.prev.state +
-  current.prev.state +
-  current.state +
-  current.next.state +
-  current.next.next.state
+const nextPotState = rules => pot =>
+  rules[pot.prev.prev.state][pot.prev.state][pot.state][pot.next.state][pot.next.next.state].state
 
-const iterateOverMiddle = liveRules => ({ firstPot, lastPot }) => {
-  let current = firstPot.next.next
-  const end = lastPot.prev
-  do {
-    current.nextState = liveRules.includes(patternAround(current)) ? '#' : '.'
-    current = current.next
-  } while (current !== end)
+const iterateOverMiddle = rules => {
+  const nextPotStateAfter = nextPotState(rules)
+  return ({ firstPot, lastPot }) => {
+    let current = firstPot.next.next
+    const end = lastPot.prev
+    do {
+      current.nextState = nextPotStateAfter(current)
+      current = current.next
+    } while (current !== end)
 
-  current = firstPot
-  do {
-    current.state = current.nextState || current.state
-    current = current.next
-  } while (current != null)
+    current = firstPot
+    do {
+      current.state = current.nextState || current.state
+      current = current.next
+    } while (current != null)
 
-  return ({ firstPot, lastPot })
+    return ({ firstPot, lastPot })
+  }
 }
 
 test('iterate over middle', () => {
-  const liveRules = [ '....#', '#....' ]
+  const rules = rulesFor([ '....# => #', '#.... => #' ])
   const input = '....#....'
-  const result = iterateOverMiddle(liveRules)(createLinkedList(input))
+  const result = iterateOverMiddle(rules)(createLinkedList(input))
   expect(input.length).toEqual(listToString(result).length)
   expect(listToString(result)).toEqual('..#...#..')
 })
@@ -180,16 +191,16 @@ test('trimDead', () => {
   expect(trimDead({ field: '#..#', offset: -2 })).toEqual({ field: '#..#', offset: -2 })
 })
 
-const nextState = liveRules =>
+const nextState = rules =>
   pipe(
     surroundWithDead,
-    iterateOverMiddle(liveRules)
+    iterateOverMiddle(rules)
   )
 
 test('acceptance of nextState', () => {
-  const liveRules = [ '...##', '..#..', '.#...', '.#.#.', '.#.##', '.##..', '.####', '#.#.#', '#.###', '##.#.', '##.##', '###..', '###.#', '####.' ]
+  const rules = rulesFor([ '...## => #', '..#.. => #', '.#... => #', '.#.#. => #', '.#.## => #', '.##.. => #', '.#### => #', '#.#.# => #', '#.### => #', '##.#. => #', '##.## => #', '###.. => #', '###.# => #', '####. => #' ])
 
-  const nextStateAfter = nextState(liveRules)
+  const nextStateAfter = nextState(rules)
   let result = nextStateAfter(createLinkedList('#..#.#..##......###...###'))
   expect(listToString(result)).toEqual('....#...#....#.....#..#..#..#....')
 
@@ -217,9 +228,10 @@ test('compute score', () => {
 
 const main = input => {
   const config = readConfig(input)
+  const nextStateAfter = nextState(config.rules)
   let state = { firstPot: config.firstPot, lastPot: config.lastPot }
   for (let i = 0; i < generations; i++) {
-    state = nextState(config.liveRules)(state)
+    state = nextStateAfter(state)
   }
   return computeScore(state)
 }
