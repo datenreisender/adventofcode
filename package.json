@@ -1,8 +1,6 @@
 {
   "name": "adventofcode",
   "version": "1.0.0",
-  "description": "",
-  "main": "a.js",
   "dependencies": {
     "ramda": "^0.26.0"
   },
@@ -17,7 +15,5 @@
   },
   "scripts": {
     "test": "jest --watch day12.js"
-  },
-  "author": "",
-  "license": "ISC"
+  }
 }
