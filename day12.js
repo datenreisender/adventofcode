@@ -75,8 +75,7 @@ const readConfig = input => {
   const initialState = lines[0].substring('initial state: '.length)
   return {
     ...createLinkedList(initialState),
-    liveRules: rulesFor(' => #'),
-    dieRules: rulesFor(' => .')
+    liveRules: rulesFor(' => #')
   }
 }
 
@@ -88,7 +87,6 @@ test('reading config file', () => {
 
   expect(listToString(config)).toEqual('###..###')
   expect(config.liveRules).toEqual(['..#.#'])
-  expect(config.dieRules).toEqual(['###.#'])
 
   expect(config.firstPot.state).toEqual('#')
   expect(config.firstPot.number).toEqual(0)
