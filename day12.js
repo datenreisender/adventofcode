@@ -264,4 +264,6 @@ if (process.env.NODE_ENV !== 'test') {
   const input = readFile(args[0])
 
   console.log(main(input))
+
+  console.log('Part 2:', 1023 + 186 * 50000000000)
 }
