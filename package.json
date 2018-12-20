@@ -14,6 +14,6 @@
     "jest": "^23.6.0"
   },
   "scripts": {
-    "test": "jest --watch day12.js"
+    "test": "jest --watch day13.js"
   }
 }
