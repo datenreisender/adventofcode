@@ -8,10 +8,18 @@ const describe = justDuringTest(global.describe) // eslint-disable-line no-unuse
 const test = justDuringTest(global.test) // eslint-disable-line no-unused-vars
 const xtest = justDuringTest(global.xtest) // eslint-disable-line no-unused-vars
 
-const LEFT = 'LEFT'
-const RIGHT = 'RIGHT'
-const UP = 'UP'
-const DOWN = 'DOWN'
+const LEFT = {
+  move: cart => cart.y--
+}
+const RIGHT = {
+  move: cart => cart.y++
+}
+const UP = {
+  move: cart => cart.x--
+}
+const DOWN = {
+  move: cart => cart.x++
+}
 const orientationOf = {
   '<': LEFT,
   '>': RIGHT,
@@ -20,19 +28,25 @@ const orientationOf = {
 }
 
 const allCarts = /[<>v^]/
-const readField = lines => ({
-  hasCrash: false,
-  tracks: lines.map(pipe(
-    replace(/[v^]/g, '|'),
-    replace(/[<>]/g, '-')
-  )),
-  carts: lines.flatMap((line, x) =>
-    line.split('').flatMap((char, y) =>
-      allCarts.test(char) ? { x, y, orientation: orientationOf[char] } : []
+class Field {
+  constructor (lines) {
+    this.hasCrash = false
+    this.tracks = lines.map(pipe(
+      replace(/[v^]/g, '|'),
+      replace(/[<>]/g, '-')
+    ))
+    this.carts = lines.flatMap((line, x) =>
+      line.split('').flatMap((char, y) =>
+        allCarts.test(char) ? { x, y, orientation: orientationOf[char] } : []
+      )
     )
-  )
-})
+  }
 
+  nextTick () {
+    this.carts.forEach(cart => cart.orientation.move(cart))
+  }
+}
+const readField = lines => new Field(lines)
 describe('reading the field', () => {
   const lines = [
     '/->-\\',
@@ -65,6 +79,27 @@ describe('reading the field', () => {
   it('has initially no crash', () => {
     expect(field.hasCrash).toBe(false)
   })
+})
+
+describe('computing the next tick', () => {
+  const cartsInTickAfter = startField => {
+    const field = readField(startField)
+    field.nextTick()
+    return field.carts
+  }
+
+  it('moves a cart forward', () => {
+    expect(cartsInTickAfter(['->-'])).toEqual([{ x: 0, y: 2, orientation: RIGHT }])
+    expect(cartsInTickAfter(['-<-'])).toEqual([{ x: 0, y: 0, orientation: LEFT }])
+
+    expect(cartsInTickAfter(['|', 'v', '|'])).toEqual([{ x: 2, y: 0, orientation: DOWN }])
+    expect(cartsInTickAfter(['|', '^', '|'])).toEqual([{ x: 0, y: 0, orientation: UP }])
+  })
+
+  xit('turns on a simple corner', () => {})
+  xit('turns correctly on an intersection', () => {})
+  xit('crashes when two carts meet', () => {})
+  xit('evaluates cart movements in the right order', () => {})
 })
 
 xtest('acceptance of nextState', () => {
@@ -190,7 +225,7 @@ xtest('acceptance of nextState', () => {
 
   let field = readField(lines)
   while (!field.hasCrash) {
-    field = field.nextTick()
+    field.nextTick()
     expect(field.toString()).toEqual(refResults.shift())
   }
 })
@@ -200,7 +235,7 @@ const main = input => {
   const lines = input.split('\n').filter(lineIsNotEmpty)
 
   let field = readField(lines)
-  while (!field.hasCrash) { field = field.nextTick() }
+  while (!field.hasCrash) { field.nextTick() }
   return field.crash
 }
 
