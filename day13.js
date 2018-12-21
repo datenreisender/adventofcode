@@ -9,23 +9,23 @@ const test = justDuringTest(global.test) // eslint-disable-line no-unused-vars
 const xtest = justDuringTest(global.xtest) // eslint-disable-line no-unused-vars
 
 const LEFT = {
+  char: '<',
   move: cart => cart.y--
 }
 const RIGHT = {
+  char: '>',
   move: cart => cart.y++
 }
 const UP = {
+  char: '^',
   move: cart => cart.x--
 }
 const DOWN = {
+  char: 'v',
   move: cart => cart.x++
 }
-const orientationOf = {
-  '<': LEFT,
-  '>': RIGHT,
-  '^': UP,
-  'v': DOWN
-}
+const allOrientations = [LEFT, RIGHT, UP, DOWN]
+const orientationOf = char => allOrientations.find(propEq('char', char))
 
 const allCarts = /[<>v^]/
 class Field {
@@ -37,7 +37,7 @@ class Field {
     ))
     this.carts = lines.flatMap((line, x) =>
       line.split('').flatMap((char, y) =>
-        allCarts.test(char) ? { x, y, orientation: orientationOf[char] } : []
+        allCarts.test(char) ? { x, y, orientation: orientationOf(char) } : []
       )
     )
   }
