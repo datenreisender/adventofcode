@@ -11,14 +11,14 @@ const xtest = justDuringTest(global.xtest) // eslint-disable-line no-unused-vars
 const horizontalTurn = (cart, trackChar) => {
   switch (trackChar) {
     case '/': cart.orientation = cart.orientation.clock.clock.clock; break
-    case '\\': cart.orientation = cart.orientation.clock; break
+    case '╲': cart.orientation = cart.orientation.clock; break
   }
 }
 
 const verticalTurn = (cart, trackChar) => {
   switch (trackChar) {
     case '/': cart.orientation = cart.orientation.clock; break
-    case '\\': cart.orientation = cart.orientation.clock.clock.clock; break
+    case '╲': cart.orientation = cart.orientation.clock.clock.clock; break
   }
 }
 
@@ -84,23 +84,23 @@ class Field {
 const readField = lines => new Field(lines)
 describe('reading the field', () => {
   const lines = [
-    '/->-\\',
-    '|   |  /----\\',
-    '| /-+--+-\\  |',
+    '/->-╲',
+    '|   |  /----╲',
+    '| /-+--+-╲  |',
     '| | |  | v  |',
-    '\\-+-/  \\-+--/',
-    '  \\------/'
+    '╲-+-/  ╲-+--/',
+    '  ╲------/'
   ]
   const field = readField(lines)
 
   it('determines the tracks on the field without carts', () => {
     expect(field.tracks).toEqual([
-      '/---\\'.split(''),
-      '|   |  /----\\'.split(''),
-      '| /-+--+-\\  |'.split(''),
+      '/---╲'.split(''),
+      '|   |  /----╲'.split(''),
+      '| /-+--+-╲  |'.split(''),
       '| | |  | |  |'.split(''),
-      '\\-+-/  \\-+--/'.split(''),
-      '  \\------/'.split('')
+      '╲-+-/  ╲-+--/'.split(''),
+      '  ╲------/'.split('')
     ])
   })
 
@@ -133,16 +133,16 @@ describe('computing the next tick', () => {
 
   it('turns on a simple corner', () => {
     expect(fieldAfterATick('>/')).toEqual('-^')
-    expect(fieldAfterATick('>\\')).toEqual('-v')
+    expect(fieldAfterATick('>╲')).toEqual('-v')
 
     expect(fieldAfterATick('/<')).toEqual('v-')
-    expect(fieldAfterATick('\\<')).toEqual('^-')
+    expect(fieldAfterATick('╲<')).toEqual('^-')
 
     expect(fieldAfterATick('v', '/')).toEqual('|\n<')
-    expect(fieldAfterATick('v', '\\')).toEqual('|\n>')
+    expect(fieldAfterATick('v', '╲')).toEqual('|\n>')
 
     expect(fieldAfterATick('/', '^')).toEqual('>\n|')
-    expect(fieldAfterATick('\\', '^')).toEqual('<\n|')
+    expect(fieldAfterATick('╲', '^')).toEqual('<\n|')
   })
 
   xit('turns correctly on an intersection', () => {})
@@ -152,120 +152,120 @@ describe('computing the next tick', () => {
 
 xtest('acceptance of nextState', () => {
   const refInput = `
-/->-\\
-|   |  /----\\
-| /-+--+-\\  |
+/->-╲
+|   |  /----╲
+| /-+--+-╲  |
 | | |  | v  |
-\\-+-/  \\-+--/
-  \\------/
+╲-+-/  ╲-+--/
+  ╲------/
   `
 
   const refResults = [
     `
-/->-\\
-|   |  /----\\
-| /-+--+-\\  |
+/->-╲
+|   |  /----╲
+| /-+--+-╲  |
 | | |  | v  |
-\\-+-/  \\-+--/
-  \\------/   `,
+╲-+-/  ╲-+--/
+  ╲------/   `,
     `
-/-->\\
-|   |  /----\\
-| /-+--+-\\  |
+/-->╲
+|   |  /----╲
+| /-+--+-╲  |
 | | |  | |  |
-\\-+-/  \\->--/
-  \\------/   `,
+╲-+-/  ╲->--/
+  ╲------/   `,
     `
 /---v
-|   |  /----\\
-| /-+--+-\\  |
+|   |  /----╲
+| /-+--+-╲  |
 | | |  | |  |
-\\-+-/  \\-+>-/
-  \\------/   `,
+╲-+-/  ╲-+>-/
+  ╲------/   `,
     `
-/---\\
-|   v  /----\\
-| /-+--+-\\  |
+/---╲
+|   v  /----╲
+| /-+--+-╲  |
 | | |  | |  |
-\\-+-/  \\-+->/
-  \\------/   `,
+╲-+-/  ╲-+->/
+  ╲------/   `,
     `
-/---\\
-|   |  /----\\
-| /->--+-\\  |
+/---╲
+|   |  /----╲
+| /->--+-╲  |
 | | |  | |  |
-\\-+-/  \\-+--^
-  \\------/   `,
+╲-+-/  ╲-+--^
+  ╲------/   `,
     `
-/---\\
-|   |  /----\\
-| /-+>-+-\\  |
+/---╲
+|   |  /----╲
+| /-+>-+-╲  |
 | | |  | |  ^
-\\-+-/  \\-+--/
-  \\------/   `,
+╲-+-/  ╲-+--/
+  ╲------/   `,
     `
-/---\\
-|   |  /----\\
-| /-+->+-\\  ^
+/---╲
+|   |  /----╲
+| /-+->+-╲  ^
 | | |  | |  |
-\\-+-/  \\-+--/
-  \\------/   `,
+╲-+-/  ╲-+--/
+  ╲------/   `,
     `
-/---\\
+/---╲
 |   |  /----<
-| /-+-->-\\  |
+| /-+-->-╲  |
 | | |  | |  |
-\\-+-/  \\-+--/
-  \\------/   `,
+╲-+-/  ╲-+--/
+  ╲------/   `,
     `
-/---\\
-|   |  /---<\\
-| /-+--+>\\  |
+/---╲
+|   |  /---<╲
+| /-+--+>╲  |
 | | |  | |  |
-\\-+-/  \\-+--/
-  \\------/   `,
+╲-+-/  ╲-+--/
+  ╲------/   `,
     `
-/---\\
-|   |  /--<-\\
+/---╲
+|   |  /--<-╲
 | /-+--+-v  |
 | | |  | |  |
-\\-+-/  \\-+--/
-  \\------/   `,
+╲-+-/  ╲-+--/
+  ╲------/   `,
     `
-/---\\
-|   |  /-<--\\
-| /-+--+-\\  |
+/---╲
+|   |  /-<--╲
+| /-+--+-╲  |
 | | |  | v  |
-\\-+-/  \\-+--/
-  \\------/   `,
+╲-+-/  ╲-+--/
+  ╲------/   `,
     `
-/---\\
-|   |  /<---\\
-| /-+--+-\\  |
+/---╲
+|   |  /<---╲
+| /-+--+-╲  |
 | | |  | |  |
-\\-+-/  \\-<--/
-  \\------/   `,
+╲-+-/  ╲-<--/
+  ╲------/   `,
     `
-/---\\
-|   |  v----\\
-| /-+--+-\\  |
+/---╲
+|   |  v----╲
+| /-+--+-╲  |
 | | |  | |  |
-\\-+-/  \\<+--/
-  \\------/   `,
+╲-+-/  ╲<+--/
+  ╲------/   `,
     `
-/---\\
-|   |  /----\\
-| /-+--v-\\  |
+/---╲
+|   |  /----╲
+| /-+--v-╲  |
 | | |  | |  |
-\\-+-/  ^-+--/
-  \\------/   `,
+╲-+-/  ^-+--/
+  ╲------/   `,
     `
-/---\\
-|   |  /----\\
-| /-+--+-\\  |
+/---╲
+|   |  /----╲
+| /-+--+-╲  |
 | | |  X |  |
-\\-+-/  \\-+--/
-  \\------/       `
+╲-+-/  ╲-+--/
+  ╲------/       `
   ]
 
   const lineIsNotEmpty = line => line.length !== 0
@@ -289,12 +289,12 @@ const main = input => {
 
 xtest('acceptance', () => {
   const refInput = `
-/->-\\
-|   |  /----\\
-| /-+--+-\\  |
+/->-╲
+|   |  /----╲
+| /-+--+-╲  |
 | | |  | v  |
-\\-+-/  \\-+--/
-  \\------/
+╲-+-/  ╲-+--/
+  ╲------/
 `
   expect(main(refInput)).toBe('7,3')
 })
@@ -302,7 +302,7 @@ xtest('acceptance', () => {
 if (process.env.NODE_ENV !== 'test') {
   const args = process.argv.slice(2)
   const readFile = name => require('fs').readFileSync(name, { encoding: 'utf8' })
-  const input = readFile(args[0])
+  const input = readFile(args[0]).replace(/╲/g, '╲')
 
   console.log(main(input))
 }
