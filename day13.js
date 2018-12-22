@@ -12,6 +12,7 @@ const horizontalTurn = (cart, trackChar) => {
   switch (trackChar) {
     case '/': cart.orientation = cart.orientation.clock.clock.clock; break
     case '╲': cart.orientation = cart.orientation.clock; break
+    case '+': cart.intersectionTurn(); break
   }
 }
 
@@ -19,6 +20,7 @@ const verticalTurn = (cart, trackChar) => {
   switch (trackChar) {
     case '/': cart.orientation = cart.orientation.clock; break
     case '╲': cart.orientation = cart.orientation.clock.clock.clock; break
+    case '+': cart.intersectionTurn(); break
   }
 }
 
@@ -50,6 +52,18 @@ DOWN.clock = LEFT
 
 const orientationOf = char => allOrientations.find(propEq('char', char))
 
+const COUNTERCLOCK = cart => {
+  cart.orientation = cart.orientation.clock.clock.clock
+  cart.nextIntersectionTurn = STRAIGHT
+}
+const STRAIGHT = cart => {
+  cart.nextIntersectionTurn = CLOCK
+}
+const CLOCK = cart => {
+  cart.orientation = cart.orientation.clock
+  cart.nextIntersectionTurn = COUNTERCLOCK
+}
+
 const allCarts = /[<>v^]/
 class Field {
   constructor (lines) {
@@ -61,7 +75,13 @@ class Field {
     ))
     this.carts = lines.flatMap((line, x) =>
       line.split('').flatMap((char, y) =>
-        allCarts.test(char) ? { x, y, orientation: orientationOf(char) } : []
+        allCarts.test(char) ? {
+          x,
+          y,
+          orientation: orientationOf(char),
+          nextIntersectionTurn: COUNTERCLOCK,
+          intersectionTurn () { this.nextIntersectionTurn(this) }
+        } : []
       )
     )
   }
@@ -106,8 +126,8 @@ describe('reading the field', () => {
 
   it('determines the cart positions', () => {
     expect(field.carts).toEqual([
-      { x: 0, y: 2, orientation: RIGHT },
-      { x: 3, y: 9, orientation: DOWN }
+      expect.objectContaining({ x: 0, y: 2, orientation: RIGHT }),
+      expect.objectContaining({ x: 3, y: 9, orientation: DOWN })
     ])
   })
 
@@ -145,7 +165,18 @@ describe('computing the next tick', () => {
     expect(fieldAfterATick('╲', '^')).toEqual('<\n|')
   })
 
-  xit('turns correctly on an intersection', () => {})
+  it('turns correctly on an intersection', () => {
+    const field = readField(['v', '+++', '  +'])
+    field.nextTick()
+    expect(field.toString()).toEqual('|\n>++\n  +')
+    field.nextTick()
+    expect(field.toString()).toEqual('|\n+>+\n  +')
+    field.nextTick()
+    expect(field.toString()).toEqual('|\n++v\n  +')
+    field.nextTick()
+    expect(field.toString()).toEqual('|\n+++\n  >')
+  })
+
   xit('crashes when two carts meet', () => {})
   xit('evaluates cart movements in the right order', () => {})
 })
