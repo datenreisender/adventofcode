@@ -246,7 +246,7 @@ describe('computing the next tick', () => {
   })
 })
 
-xtest('acceptance of nextState', () => {
+test('acceptance of nextState', () => {
   const refInput = `
 /->-╲
 |   |  /----╲
@@ -373,10 +373,10 @@ const main = input => {
 
   let field = readField(lines)
   while (!field.hasCrash) { field.nextTick() }
-  return field.crash
+  return field.crash.x + ',' + field.crash.y
 }
 
-xtest('acceptance', () => {
+test('acceptance', () => {
   const refInput = `
 /->-╲
 |   |  /----╲
