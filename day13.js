@@ -171,8 +171,8 @@ describe('computing the next tick', () => {
     expect(fieldAfterATick('->-')).toEqual('-->')
     expect(fieldAfterATick('-<-')).toEqual('<--')
 
-    expect(fieldAfterATick('|', 'v', '|')).toEqual('|\n|\nv')
-    expect(fieldAfterATick('|', '^', '|')).toEqual('^\n|\n|')
+    expect(fieldAfterATick('|', 'v', '|')).toEqual(['|', '|', 'v'].join('\n'))
+    expect(fieldAfterATick('|', '^', '|')).toEqual(['^', '|', '|'].join('\n'))
   })
 
   it('turns on a simple corner', () => {
@@ -182,37 +182,53 @@ describe('computing the next tick', () => {
     expect(fieldAfterATick('/<')).toEqual('v-')
     expect(fieldAfterATick('╲<')).toEqual('^-')
 
-    expect(fieldAfterATick('v', '/')).toEqual('|\n<')
-    expect(fieldAfterATick('v', '╲')).toEqual('|\n>')
+    expect(fieldAfterATick('v', '/')).toEqual(['|', '<'].join('\n'))
+    expect(fieldAfterATick('v', '╲')).toEqual(['|', '>'].join('\n'))
 
-    expect(fieldAfterATick('/', '^')).toEqual('>\n|')
-    expect(fieldAfterATick('╲', '^')).toEqual('<\n|')
+    expect(fieldAfterATick('/', '^')).toEqual(['>', '|'].join('\n'))
+    expect(fieldAfterATick('╲', '^')).toEqual(['<', '|'].join('\n'))
   })
 
   it('turns correctly on an intersection', () => {
-    const field = readField(['v', '+++', '  +'])
+    const field = readField([
+      'v',
+      '+++',
+      '  +'
+    ])
     field.nextTick()
-    expect(field.toString()).toEqual('|\n>++\n  +')
+    expect(field.toString()).toEqual([
+      '|',
+      '>++',
+      '  +'].join('\n'))
     field.nextTick()
-    expect(field.toString()).toEqual('|\n+>+\n  +')
+    expect(field.toString()).toEqual([
+      '|',
+      '+>+',
+      '  +'].join('\n'))
     field.nextTick()
-    expect(field.toString()).toEqual('|\n++v\n  +')
+    expect(field.toString()).toEqual([
+      '|',
+      '++v',
+      '  +'].join('\n'))
     field.nextTick()
-    expect(field.toString()).toEqual('|\n+++\n  >')
+    expect(field.toString()).toEqual([
+      '|',
+      '+++',
+      '  >'].join('\n'))
   })
 
   it('crashes when two carts meet', () => {
     const field = readField(['>+', ' ^'])
     field.nextTick()
-    expect(field.toString()).toEqual('-X\n |')
+    expect(field.toString()).toEqual(['-X', ' |'].join('\n'))
     expect(field.hasCrash).toEqual(true)
     expect(field.crash).toEqual({ x: 0, y: 1 })
   })
   it('evaluates cart movements in the right order', () => {
     expect(fieldAfterATick('>>-')).toEqual('-X-')
     expect(fieldAfterATick('-<<')).toEqual('<<-')
-    expect(fieldAfterATick('v', 'v', '|')).toEqual('|\nX\n|')
-    expect(fieldAfterATick('|', '^', '^')).toEqual('^\n^\n|')
+    expect(fieldAfterATick('v', 'v', '|')).toEqual(['|', 'X', '|'].join('\n'))
+    expect(fieldAfterATick('|', '^', '^')).toEqual(['^', '^', '|'].join('\n'))
 
     const field = readField([
       '-+--<',
