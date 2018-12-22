@@ -26,22 +26,22 @@ const verticalTurn = (cart, trackChar) => {
 
 const LEFT = {
   char: '<',
-  move: cart => cart.y--,
+  move: cart => cart.x--,
   turn: horizontalTurn
 }
 const RIGHT = {
   char: '>',
-  move: cart => cart.y++,
+  move: cart => cart.x++,
   turn: horizontalTurn
 }
 const UP = {
   char: '^',
-  move: cart => cart.x--,
+  move: cart => cart.y--,
   turn: verticalTurn
 }
 const DOWN = {
   char: 'v',
-  move: cart => cart.x++,
+  move: cart => cart.y++,
   turn: verticalTurn
 }
 const allOrientations = [LEFT, UP, RIGHT, DOWN]
@@ -72,8 +72,8 @@ class Field {
       replace(/[<>]/g, '-'),
       split('')
     ))
-    this.carts = lines.flatMap((line, x) =>
-      line.split('').flatMap((char, y) =>
+    this.carts = lines.flatMap((line, y) =>
+      line.split('').flatMap((char, x) =>
         allCarts.test(char) ? {
           x,
           y,
@@ -106,7 +106,7 @@ class Field {
       if (this.hasCrash) return
 
       cart.orientation.move(cart)
-      cart.orientation.turn(cart, this.tracks[cart.x][cart.y])
+      cart.orientation.turn(cart, this.tracks[cart.y][cart.x])
       this.checkForCrash(cart)
     }
 
@@ -119,8 +119,8 @@ class Field {
 
   toString () {
     const result = clone(this.tracks)
-    this.carts.forEach(cart => { result[cart.x][cart.y] = cart.orientation.char })
-    if (this.hasCrash) result[this.crash.x][this.crash.y] = 'X'
+    this.carts.forEach(cart => { result[cart.y][cart.x] = cart.orientation.char })
+    if (this.hasCrash) result[this.crash.y][this.crash.x] = 'X'
 
     return result.map(join('')).join('\n')
   }
@@ -150,8 +150,8 @@ describe('reading the field', () => {
 
   it('determines the cart positions', () => {
     expect(field.carts).toEqual([
-      expect.objectContaining({ x: 0, y: 2, orientation: RIGHT }),
-      expect.objectContaining({ x: 3, y: 9, orientation: DOWN })
+      expect.objectContaining({ x: 2, y: 0, orientation: RIGHT }),
+      expect.objectContaining({ x: 9, y: 3, orientation: DOWN })
     ])
   })
 
@@ -222,7 +222,7 @@ describe('computing the next tick', () => {
     field.nextTick()
     expect(field.toString()).toEqual(['-X', ' |'].join('\n'))
     expect(field.hasCrash).toEqual(true)
-    expect(field.crash).toEqual({ x: 0, y: 1 })
+    expect(field.crash).toEqual({ x: 1, y: 0 })
   })
   it('evaluates cart movements in the right order', () => {
     expect(fieldAfterATick('>>-')).toEqual('-X-')
