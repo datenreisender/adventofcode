@@ -1,5 +1,5 @@
 /* eslint-env jest */
-const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join } = require('ramda') // eslint-disable-line no-unused-vars
+const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach } = require('ramda') // eslint-disable-line no-unused-vars
 
 const justDuringTest = valueWhenRunningAsTest =>
   process.env.NODE_ENV === 'test' ? valueWhenRunningAsTest : () => {}
@@ -67,7 +67,6 @@ const CLOCK = cart => {
 const allCarts = /[<>v^]/
 class Field {
   constructor (lines) {
-    this.hasCrash = false
     this.tracks = lines.map(pipe(
       replace(/[v^]/g, '|'),
       replace(/[<>]/g, '-'),
@@ -86,11 +85,36 @@ class Field {
     )
   }
 
+  get hasCrash () {
+    return this.crash != null
+  }
+
+  checkForCrash (cart) {
+    const justCoordinates = props(['x', 'y'])
+    const hasCrash = this.carts
+      .map(justCoordinates)
+      .filter(equals(justCoordinates(cart)))
+      .length > 1
+
+    if (hasCrash) {
+      this.crash = { x: cart.x, y: cart.y }
+    }
+  }
+
   nextTick () {
-    this.carts.forEach(cart => {
+    const moveCart = cart => {
+      if (this.hasCrash) return
+
       cart.orientation.move(cart)
       cart.orientation.turn(cart, this.tracks[cart.x][cart.y])
-    })
+      this.checkForCrash(cart)
+    }
+
+    pipe(
+      sortBy(prop('y')),
+      sortBy(prop('x')),
+      forEach(moveCart)
+    )(this.carts)
   }
 
   toString () {
@@ -177,8 +201,33 @@ describe('computing the next tick', () => {
     expect(field.toString()).toEqual('|\n+++\n  >')
   })
 
-  xit('crashes when two carts meet', () => {})
-  xit('evaluates cart movements in the right order', () => {})
+  it('crashes when two carts meet', () => {
+    const field = readField(['>+', ' ^'])
+    field.nextTick()
+    expect(field.toString()).toEqual('-X\n |')
+    expect(field.hasCrash).toEqual(true)
+    expect(field.crash).toEqual({ x: 0, y: 1 })
+  })
+  it('evaluates cart movements in the right order', () => {
+    expect(fieldAfterATick('>>-')).toEqual('-X-')
+    expect(fieldAfterATick('-<<')).toEqual('<<-')
+    expect(fieldAfterATick('v', 'v', '|')).toEqual('|\nX\n|')
+    expect(fieldAfterATick('|', '^', '^')).toEqual('^\n^\n|')
+
+    const field = readField([
+      '-+--<',
+      ' ╲<'
+    ])
+    field.nextTick()
+    field.nextTick()
+    field.nextTick()
+    expect(field.toString()).toEqual(
+      [
+        '<v---',
+        ' ╲-'
+      ].join('\n')
+    )
+  })
 })
 
 xtest('acceptance of nextState', () => {
