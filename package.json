@@ -2,6 +2,9 @@
   "name": "adventofcode",
   "version": "1.0.0",
   "dependencies": {
+    "ansi-escapes": "^3.1.0",
+    "cli-color": "^1.4.0",
+    "clikey": "^1.0.2",
     "ramda": "^0.26.0"
   },
   "devDependencies": {

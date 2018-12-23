@@ -1,5 +1,9 @@
 /* eslint-env jest */
 const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach } = require('ramda') // eslint-disable-line no-unused-vars
+const fs = require('fs')
+const { yellowBright, blackBright, redBright } = require('cli-color')
+const { cursorHide, cursorShow, clearScreen, cursorTo } = require('ansi-escapes')
+const clikey = require('clikey')
 
 const justDuringTest = valueWhenRunningAsTest =>
   process.env.NODE_ENV === 'test' ? valueWhenRunningAsTest : () => {}
@@ -117,10 +121,13 @@ class Field {
     )(this.carts)
   }
 
-  toString () {
+  toString (color = false) {
+    const cartColor = color ? yellowBright : identity
+    const crashColor = color ? redBright : identity
+
     const result = clone(this.tracks)
-    this.carts.forEach(cart => { result[cart.y][cart.x] = cart.orientation.char })
-    if (this.hasCrash) result[this.crash.y][this.crash.x] = 'X'
+    this.carts.forEach(cart => { result[cart.y][cart.x] = cartColor(cart.orientation.char) })
+    if (this.hasCrash) result[this.crash.y][this.crash.x] = crashColor('X')
 
     return result.map(join('')).join('\n')
   }
@@ -367,16 +374,30 @@ test('acceptance of nextState', () => {
   }
 })
 
-const main = input => {
+const sleep = () => new Promise(resolve => setTimeout(resolve, 200))
+
+const main = async (input, verbose = false, slow = false, pause = false) => {
+  if (verbose) console.log(cursorHide + clearScreen)
+
   const lineIsNotEmpty = line => line.length !== 0
   const lines = input.split('\n').filter(lineIsNotEmpty)
 
   let field = readField(lines)
-  while (!field.hasCrash) { field.nextTick() }
+  while (!field.hasCrash) {
+    if (verbose) { console.log(cursorTo(0, 0) + blackBright(field.toString(true))) }
+
+    if (slow) { await sleep() }
+    if (pause) {
+      const key = await clikey('Next step (x for exit)')
+      if (key === 'x') process.exit()
+    }
+    field.nextTick()
+  }
+  if (verbose) { console.log(cursorTo(0, 0) + blackBright(field.toString(true)) + cursorShow) }
   return field.crash.x + ',' + field.crash.y
 }
 
-test('acceptance', () => {
+test('acceptance', async () => {
   const refInput = `
 /->-╲
 |   |  /----╲
@@ -385,13 +406,16 @@ test('acceptance', () => {
 ╲-+-/  ╲-+--/
   ╲------/
 `
-  expect(main(refInput)).toBe('7,3')
+  await expect(main(refInput)).resolves.toBe('7,3')
 })
 
 if (process.env.NODE_ENV !== 'test') {
+  const input = fs.readFileSync('input-day13', { encoding: 'utf8' }).replace(/\\/g, '╲')
   const args = process.argv.slice(2)
-  const readFile = name => require('fs').readFileSync(name, { encoding: 'utf8' })
-  const input = readFile(args[0]).replace(/╲/g, '╲')
 
-  console.log(main(input))
+  const verbose = args.includes('--verbose')
+  const slow = args.includes('--slow')
+  const pause = args.includes('--pause')
+
+  main(input, verbose, slow, pause).then(part1 => console.log('Part 1: ' + part1))
 }
