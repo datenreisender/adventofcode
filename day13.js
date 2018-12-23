@@ -101,14 +101,13 @@ class Field {
       .length > 1
 
     if (hasCrash) {
-      this.crash = { x: cart.x, y: cart.y }
+      if (!this.hasCrash) this.crash = { x: cart.x, y: cart.y }
+      this.carts = this.carts.filter(otherCart => otherCart.x !== cart.x || otherCart.y !== cart.y)
     }
   }
 
   nextTick () {
     const moveCart = cart => {
-      if (this.hasCrash) return
-
       cart.orientation.move(cart)
       cart.orientation.turn(cart, this.tracks[cart.y][cart.x])
       this.checkForCrash(cart)
@@ -376,15 +375,19 @@ test('acceptance of nextState', () => {
 
 const sleep = () => new Promise(resolve => setTimeout(resolve, 200))
 
-const part1 = async (input, verbose = false, slow = false, pause = false) => {
+const main = async (abortPredicate, returnComputer, input, verbose = false, slow = false, pause = false) => {
   if (verbose) console.log(cursorHide + clearScreen)
 
   const lineIsNotEmpty = line => line.length !== 0
   const lines = input.split('\n').filter(lineIsNotEmpty)
 
   let field = readField(lines)
-  while (!field.hasCrash) {
-    if (verbose) { console.log(cursorTo(0, 0) + blackBright(field.toString(true))) }
+  while (!abortPredicate(field)) {
+    field.crash = undefined
+    if (verbose) {
+      console.log(cursorTo(0, 0) + blackBright(field.toString(true)))
+      console.log('Remaining carts: ' + field.carts.length)
+    }
 
     if (slow) { await sleep() }
     if (pause) {
@@ -394,10 +397,17 @@ const part1 = async (input, verbose = false, slow = false, pause = false) => {
     field.nextTick()
   }
   if (verbose) { console.log(cursorTo(0, 0) + blackBright(field.toString(true)) + cursorShow) }
-  return field.crash.x + ',' + field.crash.y
+  return returnComputer(field)
 }
 
-test('acceptance of part1', async () => {
+const part1 = (...args) =>
+  main(
+    field => field.hasCrash,
+    field => field.crash.x + ',' + field.crash.y,
+    ...args
+  )
+
+test('acceptance of part 1', async () => {
   const refInput = `
 /->-╲
 |   |  /----╲
@@ -409,6 +419,25 @@ test('acceptance of part1', async () => {
   await expect(part1(refInput)).resolves.toBe('7,3')
 })
 
+const part2 = (...args) =>
+  main(
+    field => field.carts.length === 1,
+    field => field.carts[0].x + ',' + field.carts[0].y,
+    ...args
+  )
+
+test('acceptance of part 2', async () => {
+  const refInput = `
+/>-<╲
+|   |
+| /<+-╲
+| | | v
+╲>+</ |
+  |   ^
+  ╲<->/`
+  await expect(part2(refInput)).resolves.toBe('6,4')
+})
+
 if (process.env.NODE_ENV !== 'test') {
   const input = fs.readFileSync('input-day13', { encoding: 'utf8' }).replace(/\\/g, '╲')
   const args = process.argv.slice(2)
@@ -417,5 +446,6 @@ if (process.env.NODE_ENV !== 'test') {
   const slow = args.includes('--slow')
   const pause = args.includes('--pause')
 
-  part1(input, verbose, slow, pause).then(part1 => console.log('Part 1: ' + part1))
+  part1(input, verbose, slow, pause).then(result => console.log('Part 1: ' + result))
+  part2(input, verbose, slow, pause).then(result => console.log('Part 2: ' + result))
 }
