@@ -376,7 +376,7 @@ test('acceptance of nextState', () => {
 
 const sleep = () => new Promise(resolve => setTimeout(resolve, 200))
 
-const main = async (input, verbose = false, slow = false, pause = false) => {
+const part1 = async (input, verbose = false, slow = false, pause = false) => {
   if (verbose) console.log(cursorHide + clearScreen)
 
   const lineIsNotEmpty = line => line.length !== 0
@@ -397,7 +397,7 @@ const main = async (input, verbose = false, slow = false, pause = false) => {
   return field.crash.x + ',' + field.crash.y
 }
 
-test('acceptance', async () => {
+test('acceptance of part1', async () => {
   const refInput = `
 /->-╲
 |   |  /----╲
@@ -406,7 +406,7 @@ test('acceptance', async () => {
 ╲-+-/  ╲-+--/
   ╲------/
 `
-  await expect(main(refInput)).resolves.toBe('7,3')
+  await expect(part1(refInput)).resolves.toBe('7,3')
 })
 
 if (process.env.NODE_ENV !== 'test') {
@@ -417,5 +417,5 @@ if (process.env.NODE_ENV !== 'test') {
   const slow = args.includes('--slow')
   const pause = args.includes('--pause')
 
-  main(input, verbose, slow, pause).then(part1 => console.log('Part 1: ' + part1))
+  part1(input, verbose, slow, pause).then(part1 => console.log('Part 1: ' + part1))
 }
