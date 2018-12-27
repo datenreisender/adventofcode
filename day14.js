@@ -27,7 +27,18 @@ const toRecipe = input => {
 
 const length = TODO
 const nextRecipe = TODO
-const toString = TODO
+
+const toString = ({ start }) => {
+  let current = start
+  let result = ''
+  do {
+    result += current.value
+    current = current.next
+  }
+  while (current !== start)
+
+  return result
+}
 
 const part1 = (input, fewRecipiesNo) => {
   const requiredRecipiesNo = fewRecipiesNo + 10
