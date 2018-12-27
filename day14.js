@@ -9,7 +9,22 @@ const xtest = justDuringTest(global.xtest) // eslint-disable-line no-unused-vars
 
 const TODO = identity
 
-const toRecipe = TODO
+const toRecipe = input => {
+  const [head, ...tail] = input.split('')
+  const start = { value: Number(head) }
+  start.next = start
+  let last = start
+  tail.forEach(char => {
+    last.next = {
+      value: Number(char),
+      next: start
+    }
+    last = last.next
+  })
+
+  return { start, last }
+}
+
 const length = TODO
 const nextRecipe = TODO
 const toString = TODO
@@ -17,7 +32,7 @@ const toString = TODO
 const part1 = (input, fewRecipiesNo) => {
   const requiredRecipiesNo = fewRecipiesNo + 10
   let recipe = toRecipe(input)
-  let positions = [recipe.start, recipe.next]
+  let positions = [recipe.start, recipe.start.next]
   while (length(recipe) < requiredRecipiesNo) {
     nextRecipe(recipe, positions)
   }
