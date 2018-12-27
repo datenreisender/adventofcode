@@ -9,46 +9,46 @@ const xtest = justDuringTest(global.xtest) // eslint-disable-line no-unused-vars
 
 const TODO = identity
 
-const toRecipe = input => {
+const toRecipes = input => {
   const [head, ...tail] = input.split('')
-  const start = { value: Number(head) }
-  start.next = start
-  let last = start
+  const first = { value: Number(head) }
+  first.next = first
+  let last = first
   tail.forEach(char => {
     last.next = {
       value: Number(char),
-      next: start
+      next: first
     }
     last = last.next
   })
 
-  return { start, last }
+  return { first, last }
 }
 
 const length = TODO
-const nextRecipe = TODO
+const nextRecipes = TODO
 
-const toString = ({ start }) => {
-  let current = start
+const toString = ({ first }) => {
+  let current = first
   let result = ''
   do {
     result += current.value
     current = current.next
   }
-  while (current !== start)
+  while (current !== first)
 
   return result
 }
 
 const part1 = (input, fewRecipiesNo) => {
   const requiredRecipiesNo = fewRecipiesNo + 10
-  let recipe = toRecipe(input)
-  let positions = [recipe.start, recipe.start.next]
-  while (length(recipe) < requiredRecipiesNo) {
-    nextRecipe(recipe, positions)
+  let recipes = toRecipes(input)
+  let positions = [recipes.first, recipes.first.next]
+  while (length(recipes) < requiredRecipiesNo) {
+    nextRecipes(recipes, positions)
   }
 
-  return toString(recipe)
+  return toString(recipes)
 }
 
 xtest('acceptance of part 1', () => {
