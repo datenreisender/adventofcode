@@ -3,10 +3,27 @@ const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, 
 
 const justDuringTest = valueWhenRunningAsTest =>
   process.env.NODE_ENV === 'test' ? valueWhenRunningAsTest : () => {}
-
 const describe = justDuringTest(global.describe) // eslint-disable-line no-unused-vars
 const test = justDuringTest(global.test) // eslint-disable-line no-unused-vars
 const xtest = justDuringTest(global.xtest) // eslint-disable-line no-unused-vars
+
+const TODO = identity
+
+const toRecipe = TODO
+const length = TODO
+const nextRecipe = TODO
+const toString = TODO
+
+const part1 = (input, fewRecipiesNo) => {
+  const requiredRecipiesNo = fewRecipiesNo + 10
+  let recipe = toRecipe(input)
+  let positions = [recipe.start, recipe.next]
+  while (length(recipe) < requiredRecipiesNo) {
+    nextRecipe(recipe, positions)
+  }
+
+  return toString(recipe)
+}
 
 xtest('acceptance of part 1', () => {
   expect(part1('37', 9)).toBe('5158916779')
