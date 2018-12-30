@@ -18,37 +18,37 @@ const eachRecipeIsSingleDigit = ({ first }) => {
   } while (current !== first)
 }
 
-const isValid = recipies => {
-  expect(recipies.first).toBeDefined()
-  expect(recipies.last).toBeDefined()
-  expect(recipies.last.next).toBe(recipies.first)
-  eachRecipeIsSingleDigit(recipies)
+const isValid = recipes => {
+  expect(recipes.first).toBeDefined()
+  expect(recipes.last).toBeDefined()
+  expect(recipes.last.next).toBe(recipes.first)
+  eachRecipeIsSingleDigit(recipes)
 }
 
-const append = recipies => newValue => {
-  recipies.last.next = {
+const append = recipes => newValue => {
+  recipes.last.next = {
     value: Number(newValue),
-    length: recipies.last.length + 1,
-    next: recipies.first
+    length: recipes.last.length + 1,
+    next: recipes.first
   }
-  recipies.last = recipies.last.next
+  recipes.last = recipes.last.next
 }
 
 const toRecipes = input => {
   const [head, ...tail] = input.split('')
   const first = { value: Number(head), length: 1 }
   first.next = first
-  const recipies = { first, last: first }
-  tail.forEach(append(recipies))
+  const recipes = { first, last: first }
+  tail.forEach(append(recipes))
 
-  return recipies
+  return recipes
 }
 
 const initialPositions = recipes => [recipes.first, recipes.first.next]
 
 const length = ({ last }) => last.length
 
-const newRecipies = positions => {
+const newRecipes = positions => {
   const newRecipe = sum(positions.map(prop('value')))
   return newRecipe < 10
     ? [newRecipe]
@@ -63,7 +63,7 @@ const updatedPosition = position => {
 const updatePositions = positions => positions.forEach((position, index) => { positions[index] = updatedPosition(position) })
 
 const nextRecipes = (recipes, positions) => {
-  newRecipies(positions).forEach(append(recipes))
+  newRecipes(positions).forEach(append(recipes))
   updatePositions(positions)
 }
 
@@ -102,15 +102,15 @@ const toString = ({ first }) => {
   return result
 }
 
-const part1 = (input, fewRecipiesNo) => {
-  const requiredRecipiesNo = fewRecipiesNo + 10
+const part1 = (input, fewRecipesNo) => {
+  const requiredRecipesNo = fewRecipesNo + 10
   let recipes = toRecipes(input)
   let positions = initialPositions(recipes)
-  while (length(recipes) < requiredRecipiesNo) {
+  while (length(recipes) < requiredRecipesNo) {
     nextRecipes(recipes, positions)
   }
 
-  return toString(recipes).slice(fewRecipiesNo, requiredRecipiesNo)
+  return toString(recipes).slice(fewRecipesNo, requiredRecipesNo)
 }
 
 test('acceptance of part 1', () => {
