@@ -120,6 +120,6 @@ test('acceptance of part 1', () => {
 })
 
 if (process.env.NODE_ENV !== 'test') {
-  const inputOfPart1 = '580741'
-  console.log(part1(inputOfPart1, inputOfPart1.length))
+  const inputOfPart1 = 580741
+  console.log(part1('37', inputOfPart1))
 }
