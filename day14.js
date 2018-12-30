@@ -28,6 +28,7 @@ const isValid = recipies => {
 const append = recipies => newValue => {
   recipies.last.next = {
     value: Number(newValue),
+    length: recipies.last.length + 1,
     next: recipies.first
   }
   recipies.last = recipies.last.next
@@ -35,7 +36,7 @@ const append = recipies => newValue => {
 
 const toRecipes = input => {
   const [head, ...tail] = input.split('')
-  const first = { value: Number(head) }
+  const first = { value: Number(head), length: 1 }
   first.next = first
   const recipies = { first, last: first }
   tail.forEach(append(recipies))
@@ -45,7 +46,7 @@ const toRecipes = input => {
 
 const initialPositions = recipes => [recipes.first, recipes.first.next]
 
-const length = recipe => toString(recipe).length
+const length = ({ last }) => last.length
 
 const newRecipies = positions => {
   const newRecipe = sum(positions.map(prop('value')))
