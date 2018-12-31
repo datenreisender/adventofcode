@@ -102,9 +102,9 @@ const toString = ({ first }) => {
   return result
 }
 
-const part1 = (input, fewRecipesNo) => {
+const part1 = (fewRecipesNo) => {
   const requiredRecipesNo = fewRecipesNo + 10
-  let recipes = toRecipes(input)
+  let recipes = toRecipes('37')
   let positions = initialPositions(recipes)
   while (length(recipes) < requiredRecipesNo) {
     nextRecipes(recipes, positions)
@@ -114,13 +114,13 @@ const part1 = (input, fewRecipesNo) => {
 }
 
 test('acceptance of part 1', () => {
-  expect(part1('37', 9)).toBe('5158916779')
-  expect(part1('37', 5)).toBe('0124515891')
-  expect(part1('37', 18)).toBe('9251071085')
-  expect(part1('37', 2018)).toBe('5941429882')
+  expect(part1(9)).toBe('5158916779')
+  expect(part1(5)).toBe('0124515891')
+  expect(part1(18)).toBe('9251071085')
+  expect(part1(2018)).toBe('5941429882')
 })
 
 if (process.env.NODE_ENV !== 'test') {
   const inputOfPart1 = 580741
-  console.log(part1('37', inputOfPart1))
+  console.log('Part 1: ' + part1(inputOfPart1))
 }
