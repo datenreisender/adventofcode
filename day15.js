@@ -1,7 +1,23 @@
 /* eslint-env jest */
-const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse } = require('ramda') // eslint-disable-line no-unused-vars
+const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical } = require('ramda') // eslint-disable-line no-unused-vars
 
 const { describe, test, xtest, TODO, inputContent, inputContentLines, inputContentChars } = require('./setup') // eslint-disable-line no-unused-vars
+
+class Creature {
+  constructor (cell) {
+    this.cell = cell
+  }
+
+  static for (cell) {
+    return { G: new Goblin(cell), E: new Elf(cell) }[cell.value]
+  }
+}
+class Elf extends Creature {
+  get char () { return 'E' }
+}
+class Goblin extends Creature {
+  get char () { return 'G' }
+}
 
 const isWall = pathEq(['value'], '#')
 const parse = spec => {
@@ -17,14 +33,21 @@ const parse = spec => {
       cell.right = path([y, x + 1], field)
       const allNeighbors = [cell.above, cell.below, cell.left, cell.right]
       cell.neighbors = reject(isWall, allNeighbors)
+      cell.creature = Creature.for(cell)
+      cell.char = isWall(cell) ? '#' : '.'
     })
   })
+
+  field.allCells = field.flat(1)
+  field.allCreatures = field.allCells.filter(cell => cell.creature != null).map(prop('creature'))
 
   return field
 }
 const toString = field =>
   field.map(row =>
-    row.map(prop('value')).join('')
+    row.map(cell =>
+      cell.creature != null ? cell.creature.char : cell.char
+    ).join('')
   ).join('\n')
 
 test('parsing and printing the field', () => {
@@ -41,9 +64,9 @@ test('parsing and printing the field', () => {
   expect(toString(parsed)).toEqual(input.trim())
 })
 
-const enemyOf = cell => cell.value === 'G' ? 'E' : 'G'
-const hasNeighboring = sought => cell =>
-  cell.neighbors.map(prop('value')).includes(sought)
+const areEnemies = cell => otherCell =>
+  cell.creature != null && otherCell.creature != null && cell.creature.constructor.prototype !== otherCell.creature.constructor.prototype
+const hasNeighboring = sought => cell => cell.neighbors.some(sought)
 
 const sortInReadingOrder = sortWith([ ascend(prop('y')), ascend(prop('x')) ])
 
@@ -69,17 +92,17 @@ const floodSeach = (start, predicate) => {
     known.push(...frontier)
     frontier = compose(
       uniq,
-      reject(cell => known.includes(cell)),
+      reject(cell => known.includes(cell) || cell.creature != null),
       chain(prop('neighbors'))
     )(frontier)
 
     found = frontier.filter(predicate)
   } while (isEmpty(found) && !isEmpty(frontier))
-
   return sortInReadingOrder(found)[0]
 }
 
-const targetFor = (start) => floodSeach(start, hasNeighboring(enemyOf(start)))
+const targetFor = (start) => floodSeach(start, hasNeighboring(areEnemies(start)))
+const moveTargetFor = (creatureCell, target) => floodSeach(target, hasNeighboring(identical(creatureCell)))
 
 test('choosing target for movement', () => {
   const input = `
@@ -91,6 +114,40 @@ test('choosing target for movement', () => {
   const field = parse(inputContentChars(input))
   const elf = field[1][1]
   expect(targetFor(elf)).toMatchObject({ x: 3, y: 1 })
+})
+
+const move = (creature, cell) => {
+  creature.cell.creature = undefined
+  creature.cell = cell
+  cell.creature = creature
+}
+
+const nextTick = field => {
+  sortInReadingOrder(field.allCreatures).forEach(
+    creature => {
+      const target = targetFor(creature.cell)
+      const moveTo = moveTargetFor(creature.cell, target)
+      move(creature, moveTo)
+    }
+  )
+}
+
+test('moving all creatures', () => {
+  const input = `
+#######
+#.E...#
+#.....#
+#...G.#
+#######`
+  const result = `
+#######
+#..E..#
+#...G.#
+#.....#
+#######`
+  const field = parse(inputContentChars(input))
+  nextTick(field)
+  expect(toString(field)).toEqual(result.trim())
 })
 
 const part1 = TODO
