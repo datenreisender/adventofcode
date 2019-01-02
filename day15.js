@@ -3,6 +3,24 @@ const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, 
 
 const { describe, test, xtest, TODO, inputContent, inputContentLines, inputContentChars } = require('./setup') // eslint-disable-line no-unused-vars
 
+const parse = identity
+const toString = field =>
+  field.map(join('')).join('\n')
+
+test('parsing and printing the field', () => {
+  const input = `
+#######
+#.G...#
+#...EG#
+#.#.#G#
+#..G#E#
+#.....#
+#######`
+
+  const parsed = parse(inputContentChars(input))
+  expect(toString(parsed)).toEqual(input.trim())
+})
+
 const part1 = TODO
 
 xtest('acceptance of part 1', () => require('./day15-testAcceptanceOfPart1')(part1))
