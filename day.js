@@ -1,19 +1,15 @@
 /* eslint-env jest */
-const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone } = require('ramda') // eslint-disable-line no-unused-vars
+const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last } = require('ramda') // eslint-disable-line no-unused-vars
 
-const test = process.env.NODE_ENV === 'test' ? it : () => {}
+const { describe, test, xtest, TODO, inputContent, inputContentLines, inputContentChars } = require('./setup') // eslint-disable-line no-unused-vars
 
-// const lineIsNotEmpty = line => line.length !== 0
-// const lines = input.split('\n').filter(lineIsNotEmpty)
+const part1 = TODO
 
-test('.', () => {
+test('acceptance of part 1', () => {
 })
 
-// const main = args => {
-//   const readFile = name => require('fs').readFileSync(name, { encoding: 'utf8' })
-//   return readFile(args[0])
-// }
-
 if (process.env.NODE_ENV !== 'test') {
-  // console.log(main(process.argv.slice(2)))
+  const input = 'XXX' // or inputContent() or inputContentLines() or inputContentChars()
+  console.log('Part 1: ' + part1(input))
+  // console.log('Part 2: ' + part2(input))
 }
