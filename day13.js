@@ -439,7 +439,7 @@ test('acceptance of part 2', async () => {
 })
 
 if (process.env.NODE_ENV !== 'test') {
-  const input = fs.readFileSync('input-day13', { encoding: 'utf8' }).replace(/\\/g, '╲')
+  const input = fs.readFileSync('day13-input', { encoding: 'utf8' }).replace(/\\/g, '╲')
   const args = process.argv.slice(2)
 
   const verbose = args.includes('--verbose')
