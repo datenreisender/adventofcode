@@ -27,6 +27,10 @@ class Creature {
   get isDead () {
     return this.hitpoints <= 0
   }
+
+  get isElf () {
+    return this.char === 'E'
+  }
 }
 
 const isWall = pathEq(['value'], '#')
@@ -144,6 +148,7 @@ const remainingEnemies = (creatures, one) =>
 
 const nextTick = creatures => {
   let roundAborted = false
+  let elfDied = false
 
   sortInReadingOrder(creatures).forEach(
     creature => {
@@ -162,11 +167,12 @@ const nextTick = creatures => {
       if (attacked.isDead) {
         attacked.cell.creature = undefined
         creatures = without([attacked], creatures)
+        if (attacked.isElf) elfDied = true
       }
     }
   )
 
-  return [roundAborted, creatures]
+  return [roundAborted, creatures, elfDied]
 }
 
 test('moving all creatures', () => {
@@ -224,10 +230,29 @@ const part1 = input => {
   return rounds * sum(pluck('hitpoints', creatures))
 }
 
+const part2 = input => {
+  let elfAttackPower = 3
+  let elfDied, rounds, creatures
+  do {
+    creatures = allCreatures(parse(input, elfAttackPower))
+    rounds = -1
+
+    let roundAborted = false
+    do {
+      rounds++
+      [roundAborted, creatures, elfDied] = nextTick(creatures)
+    } while (!(roundAborted || elfDied))
+    elfAttackPower++
+  } while (elfDied)
+
+  return rounds * sum(pluck('hitpoints', creatures))
+}
+
 test('acceptance of part 1', () => require('./day15-testAcceptanceOfPart1')(part1))
+test('acceptance of part 2', () => require('./day15-testAcceptanceOfPart2')(part2))
 
 if (process.env.NODE_ENV !== 'test') {
   const input = inputContentChars()
   console.log('Part 1: ' + part1(input))
-  // console.log('Part 2: ' + part2(input))
+  console.log('Part 2: ' + part2(input))
 }
