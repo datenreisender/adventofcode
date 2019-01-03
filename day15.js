@@ -7,21 +7,12 @@ const { inverse } = require('cli-color')
 class Creature {
   constructor (cell) {
     this.cell = cell
+    this.char = cell.value
     this.hitpoints = 200
   }
 
   get x () { return this.cell.x }
   get y () { return this.cell.y }
-
-  static for (cell) {
-    return { G: new Goblin(cell), E: new Elf(cell) }[cell.value]
-  }
-}
-class Elf extends Creature {
-  get char () { return 'E' }
-}
-class Goblin extends Creature {
-  get char () { return 'G' }
 }
 
 const isWall = pathEq(['value'], '#')
@@ -38,7 +29,7 @@ const parse = spec => {
       cell.right = path([y, x + 1], field)
       const allNeighbors = [cell.above, cell.below, cell.left, cell.right]
       cell.neighbors = reject(isWall, allNeighbors)
-      cell.creature = Creature.for(cell)
+      cell.creature = ['E', 'G'].includes(cell.value) ? new Creature(cell) : undefined
       cell.char = isWall(cell) ? '#' : '.'
     })
   })
