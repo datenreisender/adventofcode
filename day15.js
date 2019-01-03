@@ -1,5 +1,5 @@
 /* eslint-env jest */
-const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical } = require('ramda') // eslint-disable-line no-unused-vars
+const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical, filter, gt } = require('ramda') // eslint-disable-line no-unused-vars
 const { describe, test, xtest, TODO, inputContent, inputContentLines, inputContentChars } = require('./setup') // eslint-disable-line no-unused-vars
 
 const { inverse } = require('cli-color')
@@ -142,10 +142,21 @@ const attack = creature => {
   }
 }
 
+const remainingEnemies = (allCreatures, one) => {
+  const alive = allCreatures.filter(c => c.hitpoints > 0)
+  return alive.some(other => areEnemies(one.cell)(other.cell))
+}
+
 const nextTick = field => {
+  let roundAborted = false
+
   sortInReadingOrder(field.allCreatures).forEach(
     creature => {
       if (creature.hitpoints <= 0) return
+      if (!remainingEnemies(field.allCreatures, creature)) {
+        roundAborted = true
+        return
+      }
       const target = targetFor(creature.cell)
       if (target != null && target !== creature.cell) {
         move(creature, moveTargetFor(creature.cell, target))
@@ -153,6 +164,8 @@ const nextTick = field => {
       attack(creature)
     }
   )
+
+  return !roundAborted
 }
 
 test('moving all creatures', () => {
@@ -195,9 +208,24 @@ test('creature death', () => {
   expect(toString(field)).toEqual(result.trim())
 })
 
-const part1 = TODO
+const hitpoints = pipe(
+  prop('allCreatures'),
+  map(prop('hitpoints')),
+  filter(gt(__, 0)),
+  sum
+)
 
-xtest('acceptance of part 1', () => require('./day15-testAcceptanceOfPart1')(part1))
+const part1 = input => {
+  const field = parse(input)
+  let rounds = 0
+  while (nextTick(field)) {
+    rounds++
+  }
+
+  return rounds * hitpoints(field)
+}
+
+test('acceptance of part 1', () => require('./day15-testAcceptanceOfPart1')(part1))
 
 if (process.env.NODE_ENV !== 'test') {
   const input = inputContentChars()
