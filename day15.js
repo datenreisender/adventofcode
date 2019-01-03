@@ -1,12 +1,17 @@
 /* eslint-env jest */
 const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical } = require('ramda') // eslint-disable-line no-unused-vars
-
 const { describe, test, xtest, TODO, inputContent, inputContentLines, inputContentChars } = require('./setup') // eslint-disable-line no-unused-vars
+
+const { inverse } = require('cli-color')
 
 class Creature {
   constructor (cell) {
     this.cell = cell
+    this.hitpoints = 200
   }
+
+  get x () { return this.cell.x }
+  get y () { return this.cell.y }
 
   static for (cell) {
     return { G: new Goblin(cell), E: new Elf(cell) }[cell.value]
@@ -43,11 +48,13 @@ const parse = spec => {
 
   return field
 }
-const toString = field =>
+const toString = (field, highlighted = []) =>
   field.map(row =>
-    row.map(cell =>
-      cell.creature != null ? cell.creature.char : cell.char
-    ).join('')
+    row.map(cell => {
+      const formatter = highlighted.includes(cell) ? inverse : identity
+
+      return formatter(cell.creature != null ? cell.creature.char : cell.char)
+    }).join('')
   ).join('\n')
 
 test('parsing and printing the field', () => {
@@ -69,6 +76,7 @@ const areEnemies = cell => otherCell =>
 const hasNeighboring = sought => cell => cell.neighbors.some(sought)
 
 const sortInReadingOrder = sortWith([ ascend(prop('y')), ascend(prop('x')) ])
+const sortInAttackOrder = sortWith([ ascend(path(['creature', 'hitpoints'])), ascend(prop('y')), ascend(prop('x')) ])
 
 test('sorting in reading order', () => {
   const elementsInOrder = [
@@ -98,6 +106,7 @@ const floodSeach = (start, predicate) => {
 
     found = frontier.filter(predicate)
   } while (isEmpty(found) && !isEmpty(frontier))
+
   return sortInReadingOrder(found)[0]
 }
 
@@ -122,12 +131,26 @@ const move = (creature, cell) => {
   cell.creature = creature
 }
 
+const attack = creature => {
+  const enemyNeighbors = creature.cell.neighbors.filter(areEnemies(creature.cell))
+  const attackTarget = sortInAttackOrder(enemyNeighbors)[0]
+  if (attackTarget != null) {
+    attackTarget.creature.hitpoints -= 3
+    if (attackTarget.creature.hitpoints <= 0) {
+      attackTarget.creature.cell.creature = undefined
+    }
+  }
+}
+
 const nextTick = field => {
   sortInReadingOrder(field.allCreatures).forEach(
     creature => {
+      if (creature.hitpoints <= 0) return
       const target = targetFor(creature.cell)
-      const moveTo = moveTargetFor(creature.cell, target)
-      move(creature, moveTo)
+      if (target != null && target !== creature.cell) {
+        move(creature, moveTargetFor(creature.cell, target))
+      }
+      attack(creature)
     }
   )
 }
@@ -147,6 +170,28 @@ test('moving all creatures', () => {
 #######`
   const field = parse(inputContentChars(input))
   nextTick(field)
+  expect(toString(field)).toEqual(result.trim())
+})
+
+test('creature death', () => {
+  const input = `
+#######
+#.G...#
+#...EG#
+#.#.#G#
+#..G#E#
+#.....#
+#######`
+  const result = `
+#######
+#...G.#
+#..G.G#
+#.#.#G#
+#...#E#
+#.....#
+#######`
+  const field = parse(inputContentChars(input))
+  times(() => nextTick(field), 23)
   expect(toString(field)).toEqual(result.trim())
 })
 
