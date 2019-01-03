@@ -10,10 +10,11 @@ const nullCreature = {
 }
 
 class Creature {
-  constructor (cell) {
+  constructor (cell, elfAttackPower) {
     this.cell = cell
     this.char = cell.value
     this.hitpoints = 200
+    this.attackPower = cell.value === 'G' ? 3 : elfAttackPower
   }
 
   get x () { return this.cell.x }
@@ -29,7 +30,7 @@ class Creature {
 }
 
 const isWall = pathEq(['value'], '#')
-const parse = spec => {
+const parse = (spec, elfAttackPower = 3) => {
   const field = spec.map(map((value) => ({ value })))
 
   field.forEach((row, y) => {
@@ -42,7 +43,7 @@ const parse = spec => {
       cell.right = path([y, x + 1], field)
       const allNeighbors = [cell.above, cell.below, cell.left, cell.right]
       cell.neighbors = reject(isWall, allNeighbors)
-      cell.creature = ['E', 'G'].includes(cell.value) ? new Creature(cell) : undefined
+      cell.creature = ['E', 'G'].includes(cell.value) ? new Creature(cell, elfAttackPower) : undefined
       cell.char = isWall(cell) ? '#' : '.'
     })
   })
@@ -157,7 +158,7 @@ const nextTick = creatures => {
       }
 
       const attacked = attackTarget(creature)
-      attacked.hurt(3)
+      attacked.hurt(creature.attackPower)
       if (attacked.isDead) {
         attacked.cell.creature = undefined
         creatures = without([attacked], creatures)
