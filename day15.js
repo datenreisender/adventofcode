@@ -1,8 +1,13 @@
 /* eslint-env jest */
-const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical, filter, gt, curry } = require('ramda') // eslint-disable-line no-unused-vars
+const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical, filter, gt, curry, pluck, without } = require('ramda') // eslint-disable-line no-unused-vars
 const { describe, test, xtest, TODO, inputContent, inputContentLines, inputContentChars } = require('./setup') // eslint-disable-line no-unused-vars
 
 const { inverse } = require('cli-color')
+
+const nullCreature = {
+  hurt: () => {},
+  isDead: false
+}
 
 class Creature {
   constructor (cell) {
@@ -13,6 +18,14 @@ class Creature {
 
   get x () { return this.cell.x }
   get y () { return this.cell.y }
+
+  hurt (attackPower) {
+    this.hitpoints -= attackPower
+  }
+
+  get isDead () {
+    return this.hitpoints <= 0
+  }
 }
 
 const isWall = pathEq(['value'], '#')
@@ -33,9 +46,6 @@ const parse = spec => {
       cell.char = isWall(cell) ? '#' : '.'
     })
   })
-
-  field.allCells = field.flat(1)
-  field.allCreatures = field.allCells.filter(cell => cell.creature != null).map(prop('creature'))
 
   return field
 }
@@ -123,29 +133,21 @@ const move = (creature, cell) => {
   cell.creature = creature
 }
 
-const attack = creature => {
+const attackTarget = creature => {
   const enemyNeighbors = creature.cell.neighbors.filter(areEnemies(creature))
-  const attackTarget = sortInAttackOrder(enemyNeighbors)[0]
-  if (attackTarget != null) {
-    attackTarget.creature.hitpoints -= 3
-    if (attackTarget.creature.hitpoints <= 0) {
-      attackTarget.creature.cell.creature = undefined
-    }
-  }
+  return pathOr(nullCreature, [0, 'creature'], sortInAttackOrder(enemyNeighbors))
 }
 
-const remainingEnemies = (allCreatures, one) => {
-  const alive = allCreatures.filter(c => c.hitpoints > 0)
-  return alive.some(other => areEnemies(one, other.cell))
-}
+const remainingEnemies = (creatures, one) =>
+  creatures.some(other => areEnemies(one, other.cell))
 
-const nextTick = field => {
+const nextTick = creatures => {
   let roundAborted = false
 
-  sortInReadingOrder(field.allCreatures).forEach(
+  sortInReadingOrder(creatures).forEach(
     creature => {
       if (creature.hitpoints <= 0) return
-      if (!remainingEnemies(field.allCreatures, creature)) {
+      if (!remainingEnemies(creatures, creature)) {
         roundAborted = true
         return
       }
@@ -153,11 +155,17 @@ const nextTick = field => {
       if (target != null && target !== creature.cell) {
         move(creature, moveTargetFor(creature.cell, target))
       }
-      attack(creature)
+
+      const attacked = attackTarget(creature)
+      attacked.hurt(3)
+      if (attacked.isDead) {
+        attacked.cell.creature = undefined
+        creatures = without([attacked], creatures)
+      }
     }
   )
 
-  return !roundAborted
+  return [roundAborted, creatures]
 }
 
 test('moving all creatures', () => {
@@ -174,7 +182,7 @@ test('moving all creatures', () => {
 #.....#
 #######`
   const field = parse(inputContentChars(input))
-  nextTick(field)
+  nextTick(allCreatures(field))
   expect(toString(field)).toEqual(result.trim())
 })
 
@@ -196,25 +204,23 @@ test('creature death', () => {
 #.....#
 #######`
   const field = parse(inputContentChars(input))
-  times(() => nextTick(field), 23)
+  times(() => nextTick(allCreatures(field)), 23)
   expect(toString(field)).toEqual(result.trim())
 })
 
-const hitpoints = pipe(
-  prop('allCreatures'),
-  map(prop('hitpoints')),
-  filter(gt(__, 0)),
-  sum
-)
+const allCreatures = field => field.flat(1).flatMap(propOr([], 'creature'))
 
 const part1 = input => {
-  const field = parse(input)
-  let rounds = 0
-  while (nextTick(field)) {
-    rounds++
-  }
+  let creatures = allCreatures(parse(input))
 
-  return rounds * hitpoints(field)
+  let rounds = -1
+  let roundAborted = false
+  do {
+    rounds++
+    [roundAborted, creatures] = nextTick(creatures)
+  } while (!roundAborted)
+
+  return rounds * sum(pluck('hitpoints', creatures))
 }
 
 test('acceptance of part 1', () => require('./day15-testAcceptanceOfPart1')(part1))
