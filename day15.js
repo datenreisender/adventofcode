@@ -1,5 +1,5 @@
 /* eslint-env jest */
-const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical, filter, gt } = require('ramda') // eslint-disable-line no-unused-vars
+const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical, filter, gt, curry } = require('ramda') // eslint-disable-line no-unused-vars
 const { describe, test, xtest, TODO, inputContent, inputContentLines, inputContentChars } = require('./setup') // eslint-disable-line no-unused-vars
 
 const { inverse } = require('cli-color')
@@ -71,9 +71,8 @@ test('parsing and printing the field', () => {
   expect(toString(parsed)).toEqual(input.trim())
 })
 
-const areEnemies = cell => otherCell =>
-  cell.creature != null && otherCell.creature != null && cell.creature.constructor.prototype !== otherCell.creature.constructor.prototype
-const hasNeighboring = sought => cell => cell.neighbors.some(sought)
+const areEnemies = curry((creature, otherCell) =>
+  otherCell.creature != null && creature.char !== otherCell.creature.char)
 
 const sortInReadingOrder = sortWith([ ascend(prop('y')), ascend(prop('x')) ])
 const sortInAttackOrder = sortWith([ ascend(path(['creature', 'hitpoints'])), ascend(prop('y')), ascend(prop('x')) ])
@@ -89,6 +88,11 @@ test('sorting in reading order', () => {
   expect(sortInReadingOrder(elementsInOrder)).toEqual(elementsInOrder)
   expect(sortInReadingOrder(reverse(elementsInOrder))).toEqual(elementsInOrder)
 })
+
+const targetFor = creature => floodSeach(creature.cell, hasNeighboring(areEnemies(creature)))
+const moveTargetFor = (creatureCell, target) => floodSeach(target, hasNeighboring(identical(creatureCell)))
+
+const hasNeighboring = sought => cell => cell.neighbors.some(sought)
 
 const floodSeach = (start, predicate) => {
   if (predicate(start)) return start
@@ -110,9 +114,6 @@ const floodSeach = (start, predicate) => {
   return sortInReadingOrder(found)[0]
 }
 
-const targetFor = (start) => floodSeach(start, hasNeighboring(areEnemies(start)))
-const moveTargetFor = (creatureCell, target) => floodSeach(target, hasNeighboring(identical(creatureCell)))
-
 test('choosing target for movement', () => {
   const input = `
 #######
@@ -121,7 +122,7 @@ test('choosing target for movement', () => {
 #.G.#G#
 #######`
   const field = parse(inputContentChars(input))
-  const elf = field[1][1]
+  const elf = field[1][1].creature
   expect(targetFor(elf)).toMatchObject({ x: 3, y: 1 })
 })
 
@@ -132,7 +133,7 @@ const move = (creature, cell) => {
 }
 
 const attack = creature => {
-  const enemyNeighbors = creature.cell.neighbors.filter(areEnemies(creature.cell))
+  const enemyNeighbors = creature.cell.neighbors.filter(areEnemies(creature))
   const attackTarget = sortInAttackOrder(enemyNeighbors)[0]
   if (attackTarget != null) {
     attackTarget.creature.hitpoints -= 3
@@ -144,7 +145,7 @@ const attack = creature => {
 
 const remainingEnemies = (allCreatures, one) => {
   const alive = allCreatures.filter(c => c.hitpoints > 0)
-  return alive.some(other => areEnemies(one.cell)(other.cell))
+  return alive.some(other => areEnemies(one, other.cell))
 }
 
 const nextTick = field => {
@@ -157,7 +158,7 @@ const nextTick = field => {
         roundAborted = true
         return
       }
-      const target = targetFor(creature.cell)
+      const target = targetFor(creature)
       if (target != null && target !== creature.cell) {
         move(creature, moveTargetFor(creature.cell, target))
       }
