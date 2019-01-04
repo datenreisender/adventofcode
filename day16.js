@@ -1,5 +1,5 @@
 /* eslint-env jest */
-const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical, filter, gt, curry, pluck, without, update, multiply, match, gte } = require('ramda') // eslint-disable-line no-unused-vars
+const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical, filter, gt, curry, pluck, without, update, multiply, match, gte, keys } = require('ramda') // eslint-disable-line no-unused-vars
 
 const { describe, test, xtest, TODO, inputContent, inputContentLines, inputContentChars } = require('./setup') // eslint-disable-line no-unused-vars
 
@@ -31,7 +31,7 @@ const eqir = ir(equal)
 const eqri = ri(equal)
 const eqrr = rr(equal)
 
-const operations = [ addr, addi, mulr, muli, banr, bani, borr, bori, setr, seti, gtir, gtri, gtrr, eqir, eqri, eqrr ]
+const operations = { addr, addi, mulr, muli, banr, bani, borr, bori, setr, seti, gtir, gtri, gtrr, eqir, eqri, eqrr }
 
 const invoke = curry((registers, [input1, input2, output], op) => update(output, op(registers, [input1, input2]), registers))
 
@@ -50,17 +50,63 @@ const splitRegisters = pipe(split(', '), map(Number))
 const evolveGroups = evolve({
   parameters: splitParameters,
   registersAfter: splitRegisters,
-  registersBefore: splitRegisters
+  registersBefore: splitRegisters,
+  opcode: Number
 })
 const part1 = input =>
   allSamples(input)
     .map(extractGroups)
     .map(evolveGroups)
     .map(({ parameters, registersAfter, registersBefore }) =>
-      operations.map(invoke(registersBefore, parameters)).filter(equals(registersAfter)).length
+      values(operations)
+        .map(invoke(registersBefore, parameters))
+        .filter(equals(registersAfter))
+        .length
     )
     .filter(gte(__, 3))
     .length
+
+const part2 = input => {
+  const possibleOpcodes = map(() => range(0, 16), operations)
+
+  allSamples(input)
+    .map(extractGroups)
+    .map(evolveGroups)
+    .map(({ opcode, parameters, registersAfter, registersBefore }) =>
+      keys(operations).forEach(opname => {
+        const operationResuls = invoke(registersBefore, parameters, operations[opname])
+        if (!equals(operationResuls, registersAfter)) {
+          possibleOpcodes[opname] = without([opcode], possibleOpcodes[opname])
+        }
+      })
+    )
+
+  const opByCode = []
+
+  while (!isEmpty(possibleOpcodes)) {
+    const determinedOpCodes = toPairs(possibleOpcodes).filter(([_, opcodes]) => opcodes.length === 1)
+    determinedOpCodes.forEach(([opname, opcodes]) => {
+      opByCode[opcodes[0]] = operations[opname]
+      opByCode[opcodes[0]].opname = opname
+      delete possibleOpcodes[opname]
+    })
+    keys(possibleOpcodes).forEach(opname => {
+      possibleOpcodes[opname] = without(determinedOpCodes.map(([_, opcodes]) => opcodes[0]), possibleOpcodes[opname])
+    })
+  }
+
+  const program =
+    input
+      .split(/\n{3,}/)[1]
+      .split(/\n/)
+      .filter(complement(isEmpty))
+      .map(pipe(split(/ /), map(Number)))
+
+  return reduce(
+    (register, [opcode, ...parameters]) => invoke(register, parameters, opByCode[opcode]),
+    [0, 0, 0, 0],
+    program)[0]
+}
 
 test('run two samples', () => {
   const samples = `
@@ -82,6 +128,6 @@ test('run two samples', () => {
 
 if (process.env.NODE_ENV !== 'test') {
   const input = inputContent()
-  console.log('Part 1: ' + part1(input))
-  // console.log('Part 2: ' + part2(input))
+  console.log('Part 1:', part1(input))
+  console.log('Part 2:', part2(input))
 }
