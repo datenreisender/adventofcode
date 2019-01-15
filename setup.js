@@ -12,9 +12,9 @@ exports.TODO = identity
 const readFile = name => require('fs').readFileSync(name, { encoding: 'utf8' })
 
 const lineIsNotEmpty = line => line.length !== 0
-const lines = input => input.split('\n').filter(lineIsNotEmpty)
+exports.lines = input => input.split('\n').filter(lineIsNotEmpty)
 
 const baseFilename = () => process.argv[1].match(/(day\d+).js$/)[1]
 exports.inputContent = () => readFile(baseFilename() + '-input')
-exports.inputContentLines = (text = exports.inputContent()) => lines(text)
-exports.inputContentChars = (text = exports.inputContent()) => lines(text).map(split(''))
+exports.inputContentLines = (text = exports.inputContent()) => exports.lines(text)
+exports.inputContentChars = (text = exports.inputContent()) => exports.lines(text).map(split(''))
