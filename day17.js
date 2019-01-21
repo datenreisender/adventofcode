@@ -1,7 +1,8 @@
 /* eslint-env jest */
 const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical, filter, gt, curry, pluck, without, update, multiply, match, gte, keys } = require('ramda') // eslint-disable-line no-unused-vars
-
 const { describe, test, xtest, TODO, inputContent, inputContentLines, inputContentChars, lines } = require('./setup') // eslint-disable-line no-unused-vars
+
+const { inverse } = require('cli-color')
 
 const specLine = /(.)=(\d+), .=(\d+)\.\.(\d+)/
 const parseLine = line => {
@@ -16,42 +17,70 @@ test('parse line', () => {
   expect(parseLine('x=498, y=2..4')).toEqual([{ x: 498, y: 2 }, { x: 498, y: 3 }, { x: 498, y: 4 }])
 })
 
-const contained = (cells, cell) => cells.some(c => c.x === cell.x && c.y === cell.y)
+const state = {
+  empty: '.',
+  wall: '#',
+  wet: '|',
+  water: '~'
+}
 
 const parseSpec = spec => {
   const walls = spec.flatMap(parseLine)
-  const wet = []
-  const water = []
   const minX = Math.min(...walls.map(prop('x')))
   const maxX = Math.max(...walls.map(prop('x')))
   const minY = Math.min(...walls.map(prop('y')))
   const maxY = Math.max(...walls.map(prop('y')))
 
-  const cellString = ({ x, y }) => `${x}, ${String(y).padStart(String(maxY).length)}`
-  const allWater = () => new Set(wet.concat(water).map(cellString))
+  const offsetX = minX
+  const offsetY = minY
+  const sizeX = maxX - offsetX + 1
+  const sizeY = maxY - offsetY + 1
 
-  const cellToString = y => x =>
-    contained(walls, { x, y }) ? '#'
-      : contained(water, { x, y }) ? '~'
-        : contained(wet, { x, y }) ? '|'
-          : '.'
-  const fieldToString = () => range(minY, maxY + 1).map(y =>
-    range(minX, maxX + 1).map(cellToString(y)).join('')
-  ).join('\n')
-  const toString = () => `Upper left is ${[minX, minY]}, lower right is ${[maxX, maxY]}\n${fieldToString()}`
+  const createEmptyRow = () => new Array(sizeX).fill(state.empty)
+  const field = times(createEmptyRow, sizeY)
+  walls.forEach(({ x, y }) => { field[y - offsetY][x - offsetX] = state.wall })
+
+  const isWatery = contains(__, [state.wet, state.water])
+
+  const fieldToString = (highlights = []) =>
+    field.map((row, y) => row.map((cell, x) =>
+      contains({ x, y }, highlights) ? inverse(cell) : cell
+    ).join('')).join('\n')
+
+  const toString = (highlights) => `Upper left is ${[minX, minY]}, lower right is ${[maxX, maxY]}\n${fieldToString(highlights)}`
 
   return {
-    walls,
-    addWet: cell => wet.push(cell),
-    addWater: cell => water.push(cell),
-    isFree: cell => cell.y <= maxY && !contained(walls, cell) && !contained(water, cell),
-    spring: [{ x: 500, y: minY }],
-    isGround: ({ y }) => y === maxY,
-    countWater: () => allWater().size,
-    allWater,
+    field,
+    wet: ({ x, y }) => { field[y][x] = state.wet },
+    water: ({ x, y }) => { field[y][x] = state.water },
+    isFree: ({ x, y }) => y <= sizeY - 1 && [state.empty, state.wet].includes(field[y][x]),
+    spring: [{ x: 500 - offsetX, y: minY - offsetY }],
+    isGround: ({ y }) => y === sizeY - 1,
+    countWater: () => field.flat().filter(isWatery).length,
     toString
   }
 }
+
+test('acceptance of parseSpec', () => {
+  const expectedField = `
+Upper left is 495,1, lower right is 506,13
+...........#
+#..#.......#
+#..#..#.....
+#..#..#.....
+#.....#.....
+#.....#.....
+#######.....
+............
+............
+...#.....#..
+...#.....#..
+...#.....#..
+...#######..
+  `.trim()
+
+  expect(parseSpec(lines(acceptanceTestSpec)).toString()).toEqual(expectedField)
+})
 
 const cellBelow = cell => ({ x: cell.x, y: cell.y + 1 })
 const cellAbove = cell => ({ x: cell.x, y: cell.y - 1 })
@@ -62,7 +91,7 @@ const trickleDownOne = field => waterSource => {
   let current = waterSource
   while (field.isFree(cellBelow(current))) {
     current = cellBelow(current)
-    field.addWet(current)
+    field.wet(current)
   }
 
   return field.isGround(current) ? [] : current
@@ -92,7 +121,7 @@ const fillUpOne = field => waterBottom => {
     const [rightCells, rightDrainage] = fillRight(field, current)
     hasDrainage = leftDrainage.length === 1 || rightDrainage.length === 1
     const allCells = leftCells.concat(rightCells, current)
-    allCells.forEach(hasDrainage ? field.addWet : field.addWater)
+    allCells.forEach(hasDrainage ? field.wet : field.water)
     result = leftDrainage.concat(rightDrainage)
 
     current = cellAbove(current)
@@ -107,15 +136,15 @@ const part1 = spec => {
   let waterSources = [field.spring]
   while (waterSources.length > 0) {
     const waterBottoms = trickleDown(field, waterSources)
-    waterSources = fillUp(field, waterBottoms)
-    //    console.log(field.toString())
+    waterSources = uniq(fillUp(field, waterBottoms))
+    // console.log(field.toString(waterSources.concat(waterBottoms)))
   }
 
+  // console.log(field.toString())
   return field.countWater()
 }
 
-test('acceptance of part 1', () => {
-  const input = `
+const acceptanceTestSpec = `
 x=495, y=2..7
 y=7, x=495..501
 x=501, y=3..7
@@ -124,7 +153,8 @@ x=506, y=1..2
 x=498, y=10..13
 x=504, y=10..13
 y=13, x=498..504`
-  expect(part1(lines(input))).toBe(57)
+test('acceptance of part 1', () => {
+  expect(part1(lines(acceptanceTestSpec))).toBe(57)
 })
 
 if (process.env.NODE_ENV !== 'test') {
