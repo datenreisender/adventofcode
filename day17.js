@@ -41,6 +41,7 @@ const parseSpec = spec => {
   walls.forEach(({ x, y }) => { field[y - offsetY][x - offsetX] = state.wall })
 
   const isWatery = contains(__, [state.wet, state.water])
+  const isWater = equals(state.water)
 
   const fieldToString = (highlights = []) =>
     field.map((row, y) => row.map((cell, x) =>
@@ -56,7 +57,8 @@ const parseSpec = spec => {
     isFree: ({ x, y }) => y <= sizeY - 1 && [state.empty, state.wet].includes(field[y][x]),
     spring: [{ x: 500 - offsetX, y: minY - offsetY }],
     isGround: ({ y }) => y === sizeY - 1,
-    countWater: () => field.flat().filter(isWatery).length,
+    wateryFieldCount: () => field.flat().filter(isWatery).length,
+    waterFieldCount: () => field.flat().filter(isWater).length,
     toString
   }
 }
@@ -131,7 +133,7 @@ const fillUpOne = field => waterBottom => {
 const fillUp = (field, waterBottoms) =>
   waterBottoms.flatMap(fillUpOne(field))
 
-const part1 = spec => {
+const simulate = spec => {
   const field = parseSpec(spec)
   let waterSources = [field.spring]
   while (waterSources.length > 0) {
@@ -141,8 +143,11 @@ const part1 = spec => {
   }
 
   // console.log(field.toString())
-  return field.countWater()
+  return field
 }
+
+const part1 = spec => simulate(spec).wateryFieldCount()
+const part2 = spec => simulate(spec).waterFieldCount()
 
 const acceptanceTestSpec = `
 x=495, y=2..7
@@ -156,9 +161,12 @@ y=13, x=498..504`
 test('acceptance of part 1', () => {
   expect(part1(lines(acceptanceTestSpec))).toBe(57)
 })
+test('acceptance of part 2', () => {
+  expect(part2(lines(acceptanceTestSpec))).toBe(29)
+})
 
 if (process.env.NODE_ENV !== 'test') {
   const input = inputContentLines()
   console.log('Part 1: ' + part1(input))
-  // console.log('Part 2: ' + part2(input))
+  console.log('Part 2: ' + part2(input))
 }
