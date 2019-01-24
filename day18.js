@@ -4,11 +4,25 @@ const { describe, test, xtest, TODO, inputContent, inputContentLines, inputConte
 
 const part1 = TODO
 
-test('acceptance of part 1', () => {
+xtest('acceptance of part 1', () => {
+  const acceptanceInput = chars(`
+.#.#...|#.
+.....#|##|
+.|..|...#.
+..|#.....#
+#.#|||#|#|
+...#.||...
+.|....|...
+||...#|.#|
+|.||||..|.
+...#.|..|.
+  `.trim())
+
+  expect(part1(acceptanceInput)).toBe(1147)
 })
 
 if (process.env.NODE_ENV !== 'test') {
-  const input = inputContentChars()
+  const input = inputContent()
   console.log('Part 1: ' + part1(input))
   // console.log('Part 2: ' + part2(input))
 }
