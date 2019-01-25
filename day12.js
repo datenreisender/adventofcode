@@ -2,7 +2,7 @@
 const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip } = require('ramda') // eslint-disable-line no-unused-vars
 
 const test = process.env.NODE_ENV === 'test' ? it : () => {}
-const xtest = process.env.NODE_ENV === 'test' ? xit : () => {}
+const xtest = process.env.NODE_ENV === 'test' ? xit : () => {} // eslint-disable-line no-unused-vars
 
 let generations = 20
 // generations = 50000000000

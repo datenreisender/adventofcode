@@ -1,5 +1,6 @@
 const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone } = require('ramda') // eslint-disable-line no-unused-vars
 
+// eslint-disable-next-line no-unused-vars
 const initial_ = [
   { x: 9, y: 1, dx: 0, dy: 2 },
   { x: 7, y: 0, dx: -1, dy: 0 },
