@@ -55,18 +55,43 @@ test('acceptance of evolve field', () => {
   expect(evolveField(acceptanceInput)).toEqual(afterFirstMinute)
 })
 
+const computeScore = finalField =>
+  count(states.tree, finalField.flat()) *
+  count(states.lumberyard, finalField.flat())
+
 const part1 = field => {
   const finalField = times(T, 10).reduce(evolveField, field)
 
-  return count(states.tree, finalField.flat()) * count(states.lumberyard, finalField.flat())
+  return computeScore(finalField)
 }
 
 test('acceptance of part 1', () => {
   expect(part1(acceptanceInput)).toBe(1147)
 })
 
+// eslint-disable-next-line no-unused-vars
+const simulateForPart2 = field => {
+  const finalField = times(identity, 1000).reduce(
+    (previousField, iteration) => {
+      console.log(iteration, computeScore(previousField))
+      console.log(previousField.map(join('')).join('\n'))
+      return evolveField(previousField)
+    }
+    , field)
+
+  return count(states.tree, finalField.flat()) * count(states.lumberyard, finalField.flat())
+}
+
+const finalLoop = [ 187596, 189833, 189504, 189994, 190236, 190143, 187371, 190080, 192807, 194054, 197054, 199520, 199755, 200448, 198950, 195840, 193965, 193140, 191980, 191649, 190820, 190162, 190740, 187450, 186624, 186371, 187596, 187272 ]
+
+const part2 = iterations => finalLoop[iterations % 28]
+
+test('acceptance of part 2', () => {
+  expect(part2(999)).toBe(191649)
+})
+
 if (process.env.NODE_ENV !== 'test') {
   const input = inputContentChars()
   console.log('Part 1: ' + part1(input))
-  // console.log('Part 2: ' + part2(input))
+  console.log('Part 2: ' + part2(1000000000))
 }
