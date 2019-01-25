@@ -1,45 +1,8 @@
 /* eslint-env jest */
 const { values, toPairs, splitEvery, range, reduce, maxBy, minBy, prop, equals, sum, isEmpty, complement, propEq, either, times, propOr, __, pathOr, insert, repeat, zip, flatten, remove, over, add, lensIndex, scan, clone, contains, dropLast, pipe, identity, evolve, subtract, concat, flip, replace, split, join, props, sortBy, forEach, last, map, path, pathEq, reject, compose, uniq, chain, sortWith, ascend, reverse, identical, filter, gt, curry, pluck, without, update, multiply, match, gte, keys } = require('ramda') // eslint-disable-line no-unused-vars
-
 const { describe, test, xtest, TODO, inputContent, inputContentLines, inputContentChars } = require('./setup') // eslint-disable-line no-unused-vars
 
-const rr = f => (registers, inputs) => f(registers[inputs[0]], registers[inputs[1]])
-const ri = f => (registers, inputs) => f(registers[inputs[0]], inputs[1])
-const ir = f => (registers, inputs) => f(inputs[0], registers[inputs[1]])
-const r = (registers, inputs) => registers[inputs[0]]
-const i = (registers, inputs) => inputs[0]
-
-const and = (a, b) => a & b
-const or = (a, b) => a | b
-const greater = (a, b) => a > b ? 1 : 0
-const equal = (a, b) => a === b ? 1 : 0
-
-const addr = rr(add)
-const addi = ri(add)
-const mulr = rr(multiply)
-const muli = ri(multiply)
-const banr = rr(and)
-const bani = ri(and)
-const borr = rr(or)
-const bori = ri(or)
-const setr = r
-const seti = i
-const gtir = ir(greater)
-const gtri = ri(greater)
-const gtrr = rr(greater)
-const eqir = ir(equal)
-const eqri = ri(equal)
-const eqrr = rr(equal)
-
-const operations = { addr, addi, mulr, muli, banr, bani, borr, bori, setr, seti, gtir, gtri, gtrr, eqir, eqri, eqrr }
-
-const invoke = curry((registers, [input1, input2, output], op) => update(output, op(registers, [input1, input2]), registers))
-
-test('some invocations', () => {
-  expect(invoke([3, 2, 1, 1], [2, 1, 2], mulr)).toEqual([3, 2, 2, 1])
-  expect(invoke([3, 2, 1, 1], [2, 1, 2], addi)).toEqual([3, 2, 2, 1])
-  expect(invoke([3, 2, 1, 1], [2, 1, 2], seti)).toEqual([3, 2, 2, 1])
-})
+const { operations, invoke } = require('./operations')
 
 const sampleRE = /Before: \[(?<registersBefore>[\d, ]+)\]\s+(?<opcode>\d+) (?<parameters>[\d ]+)\s+After:\s\s\[(?<registersAfter>[\d, ]+)\]/
 
